@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8"><title>SL-Mobile Management System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&family=Noto+Sans+Thai:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+</head><body>
+<div id="login" style="display:none"><form class="card" id="lf"><h2>SL-Mobile</h2><label>Email</label><input id="le" type="email" autocomplete="username" required><label>Password</label><input id="lp" type="password" autocomplete="current-password" required><button class="btn" style="width:100%;margin-top:12px">เข้าสู่ระบบ</button><p id="lerr" style="color:#c0392b"></p></form></div>
+<div id="app" style="display:none"><nav id="nav"></nav><main id="m"></main></div>
+<div id="toast"></div>
+<script type="module" src="app.js"></script>
+</body></html>
