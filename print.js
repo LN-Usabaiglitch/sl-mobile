@@ -17,15 +17,24 @@ function run(body,page,margin){
 export function printDoc(kind,j,S,warn,x={}){
   const dev=[j.brand,j.model,j.color].filter(Boolean).join(" ");
   if(kind==="stk"){
-    run(`<div class="pg" style="width:40mm;height:30mm;padding:1.2mm;display:flex;gap:1mm;font-size:7px;line-height:1.3"><div style="flex:1;min-width:0;overflow:hidden"><div style="${ln};font-weight:700">${esc(S.name)}</div><div style="${ln};font-weight:700;font-size:10px">${esc(j.code)}</div><div style="${ln};font-weight:700">${esc(j.cname)}</div><div style="${ln}">${esc(j.phone)}</div><div style="${ln}">${esc(((j.brand||"")+" "+(j.model||"")).trim())}</div><div style="${ln}">${fd(j.date)}</div></div><div style="width:14mm;height:14mm;flex:none;align-self:flex-end">${qr(x.url||j.code)}</div></div>`,"40mm 30mm","0");
+    const sv=list(j.issues,j.issue).join(", "),ls=(a,b)=>`<div style="display:flex;gap:.8mm;font-size:7px;line-height:1.35;min-width:0"><span style="flex:none">${a}</span><span style="flex:1;min-width:0;font-weight:700;${ln}">${b}</span></div>`;
+    run(`<div class="pg" style="width:30mm;height:40mm;padding:1.4mm 1.6mm;display:flex;flex-direction:column;line-height:1.3">
+<div style="display:flex;justify-content:space-between;align-items:baseline;gap:1mm"><span style="font-size:9px;font-weight:700;min-width:0;${ln}">${esc(j.cname)}</span><span style="font-size:8px;font-weight:700;flex:none">${esc(j.code)}</span></div>
+${ls("ເບີ:",esc(j.phone))}${ls("ລຸ້ນ / ສີ:",esc([j.brand,j.model,j.color].filter(Boolean).join(" ")))}${ls("ລະຫັດ:",esc(j.lock))}
+<hr style="margin:.8mm 0"><div style="text-align:center;font-size:6.5px">ອາການ</div>
+<div style="flex:1;min-height:0;overflow:hidden;font-size:8.5px;font-weight:700;line-height:1.3;padding-top:.4mm">${esc(sv)}</div>
+<div style="text-align:center;font-size:8px;font-weight:700;${ln}"><span style="font-size:6px;font-weight:400">ເບີຮ້ານ </span>${esc(S.phone)}</div>
+<div style="text-align:center;font-size:6px">${fd(j.date)} ${ft(j.date)}</div></div>`,"30mm 40mm","0");
   }else if(kind==="rec"){
-    const r=(a,b,c)=>b?`<div style="display:flex;gap:1.5mm;padding:.5mm 0;border-bottom:.2mm dashed #b7c3dc"><span style="width:15mm;flex:none;color:#1d4aa3;font-weight:700">${a}</span><span style="flex:1;font-weight:700;${c||""}">${esc(b)}</span></div>`:"";
-    const sv=list(j.issues,j.issue).join(" • "),cd=list(j.conds,j.cond).join(" • ");
-    run(`<div class="pg" style="width:100mm;height:60mm;border:.3mm solid #1d4aa3;display:flex;flex-direction:column;font-size:8.5px;line-height:1.3">
-<div style="background:#1d4aa3;color:#fff;padding:1.5mm 3mm;display:flex;align-items:center;gap:2mm">${S.logo?`<div style="background:#fff;border-radius:1mm;padding:.4mm">${logo(S,6)}</div>`:""}<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;${ln}">${esc(S.name)}</div><div style="font-size:8px">ໃບຮັບເຄື່ອງ</div></div><div style="text-align:right"><div style="font-size:14px;font-weight:700">${esc(j.code)}</div><div style="font-size:7.5px">${fd(j.date)} &nbsp;${ft(j.date)}</div></div></div>
-<div style="flex:1;display:flex;gap:2mm;padding:1mm 3mm 0;min-height:0"><div style="flex:1;min-width:0">${r("ຊື່ລູກຄ້າ",j.cname,"font-size:10px")}${r("ເບີໂທ",j.phone)}${r("ເຄື່ອງ",dev)}${r("ບໍລິການ",sv,"color:#c25e0a")}${r("ສະພາບເຄື່ອງ",cd,"color:#1f7a55")}${r("ຜູ້ຮັບ",j.by)}</div><div style="width:17mm;height:17mm;flex:none;margin-top:.5mm">${qr(x.url||j.code)}</div></div>
-<div style="margin:0 3mm;background:#fff4d1;border:.25mm solid #e0a800;border-radius:1mm;padding:.7mm 1.5mm;font-size:6px;line-height:1.3"><b>❖ ໝາຍເຫດ:</b> ▪ ກະລຸນາຮັກສາໃບຝາກເຄື່ອງຢ່າງທ່ານໃຫ້ດີ ເວລາຮັບເຄື່ອງໃຫ້ເອົາໃບຝາກເຄື່ອງມາພ້ອມ ▪ ການຮັບປະກັນເຄື່ອງມີຜົນ ແມ່ນຈະເລີ່ມນັບຕັ້ງແຕ່ມື້ທີ່ທາງຮ້ານເຮົາໄດ້ແຈ້ງໃຫ້ມາຮັບເຄື່ອງ, ຖ້າຫາກວ່າພາຍໃນ 1-3 ເດືອນ ລູກຄ້າຍັງບໍ່ມາຮັບເຄື່ອງ ທາງຮ້ານຈະບໍ່ສາມາດຮັບປະກັນເຄື່ອງຂອງລູກຄ້າໄດ້</div>
-<div style="margin-top:1mm;background:#12306b;color:#fff;padding:1mm 3mm;display:flex;justify-content:space-between;font-size:7px"><span>ເບີໂທ: ${esc(S.phone)} | FB: ${esc(S.fb)}</span><span>ຂອບໃຈທີ່ມາອຸດໜູນ</span></div></div>`,"A4 portrait","5mm");
+    const dv=[dev,list(j.issues,j.issue).join(", ")].filter(Boolean).join(" · ");
+    const f=(a,b,w)=>`<div style="${w};display:flex;gap:1mm;align-items:baseline;min-width:0"><span style="flex:none">${a}</span><span style="flex:1;min-width:0;border-bottom:.25mm dotted #444;font-weight:700;${ln}">${b}</span></div>`;
+    run(`<div class="pg" style="width:100mm;height:60mm;border:.3mm solid #999;padding:2.5mm 3.5mm;display:flex;flex-direction:column;font-size:8px;line-height:1.35">
+<div style="text-align:center;font-size:12px;font-weight:700;text-decoration:underline;color:#12306b">ໃບຮັບເຄື່ອງຮ້ານ ${esc(S.name)}</div>
+<div style="display:flex;gap:2.5mm;margin-top:2mm">${f("ຊື່:",esc(j.cname),"flex:1.3")}${f("Code:",esc(j.code),"flex:1")}${f("ວັນທີ:",fd(j.date)+" "+ft(j.date),"flex:1.35")}</div>
+${dv?`<div style="margin-top:1mm;font-size:7px;${ln}">ເຄື່ອງ / ບໍລິການ: <b>${esc(dv)}</b></div>`:""}
+<div style="display:flex;gap:2mm;margin-top:1.2mm;flex:1;min-height:0"><div style="flex:1;font-size:6.8px;line-height:1.35"><b><u>❖ ໝາຍເຫດ:</u></b><br>▪ ກະລຸນາຮັກສາໃບຝາກເຄື່ອງຂອງທ່ານໃຫ້ດີ ເວລາຮັບເຄື່ອງໃຫ້ເອົາໃບຝາກເຄື່ອງມາພ້ອມ<br>▪ ການຮັບປະກັນເຄື່ອງສ້ອມ ແມ່ນຈະເລີ່ມນັບຕັ້ງແຕ່ມື້ທີ່ທາງຮ້ານເຮົາໄດ້ແຈ້ງໃຫ້ມາຮັບເອົາເຄື່ອງ, ຖ້າຫາກວ່າພາຍໃນ 1-3 ເດືອນ ລູກຄ້າຍັງບໍ່ມາຮັບເອົາເຄື່ອງ ທາງຮ້ານຈະບໍ່ສາມາດຮັບປະກັນເຄື່ອງຂອງລູກຄ້າໄດ້</div><div style="width:16mm;flex:none;text-align:center;font-size:5.5px;line-height:1.2"><div style="width:14mm;height:14mm;margin:0 auto">${qr(x.url||j.code)}</div>ສະແກນກວດສະຖານະ</div></div>
+<div style="font-size:7.5px"><u>ເບີໂທຕິດຕໍ່: ${esc(S.phone)}</u> &nbsp; <u>Facebook: ${esc(S.fb)}</u></div>
+<div style="text-align:center;font-weight:700;font-size:7.5px;margin-top:.8mm">(ຂໍຂອບໃຈທຸກທ່ານທີ່ມາອຸດໜູນຮ້ານ ${esc(S.name)})</div></div>`,"A4 portrait","5mm");
   }else if(kind==="acc"){
     const r=(a,b)=>`<div style="display:flex;gap:4mm;padding:2.2mm 0;border-bottom:1px solid #c9d3e6"><span style="width:48mm;flex:none;color:#1d4aa3;font-weight:700">${a}</span><span style="flex:1;font-weight:700;min-height:6mm">${b||"&nbsp;"}</span></div>`;
     const dots="................................................";

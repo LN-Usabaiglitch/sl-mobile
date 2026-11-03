@@ -8,10 +8,11 @@ const fapp=initializeApp(firebaseConfig),auth=getAuth(fapp),fdb=getFirestore(fap
 const SH=doc(fdb,"settings","shop"),J=id=>doc(fdb,"jobs",id);
 
 // ---- ค่าเริ่มต้น (ພາສາລາວ) ----
-const T={"รับเครื่องแล้ว":"ລໍຖ້າດຳເນີນການ","รอตรวจสอบ":"ລໍຖ້າດຳເນີນການ","กำลังดำเนินการ":"ກຳລັງດຳເນີນການ","กำลังซ่อม":"ກຳລັງຊ່ອມ","รออะไหล่":"ລໍຖ້າອາໄຫຼ່","ซ่อมเสร็จแล้ว":"ຊ່ອມແລ້ວ","พร้อมให้ลูกค้ามารับเครื่อง":"ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ลูกค้ามารับเครื่องแล้ว":"ລູກຄ້າມາຮັບແລ້ວ","ยกเลิกงาน":"ຍົກເລີກ"};
+const T={"รับเครื่องแล้ว":"ລໍຖ້າດຳເນີນການ","รอตรวจสอบ":"ລໍຖ້າດຳເນີນການ","กำลังดำเนินการ":"ກຳລັງດຳເນີນການ","กำลังซ่อม":"ກຳລັງສ້ອມ","รออะไหล่":"ລໍຖ້າອາໄຫຼ່","ซ่อมเสร็จแล้ว":"ສ້ອມແລ້ວ","พร้อมให้ลูกค้ามารับเครื่อง":"ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ลูกค้ามารับเครื่องแล้ว":"ລູກຄ້າມາຮັບແລ້ວ","ยกเลิกงาน":"ຍົກເລີກ"};
+T["ຊ່ອມແລ້ວ"]="ສ້ອມແລ້ວ";T["ກຳລັງຊ່ອມ"]="ກຳລັງສ້ອມ";
 const tn=n=>T[n]||n;
-const DS=[["ລໍຖ້າດຳເນີນການ","#7a8394"],["ກຳລັງດຳເນີນການ","#d4a017"],["ກຳລັງຊ່ອມ","#e0781f"],["ລໍຖ້າອາໄຫຼ່","#d35400"],["ຊ່ອມແລ້ວ","#1f9d6b"],["ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","#17a34a"],["ລູກຄ້າມາຮັບແລ້ວ","#1d4aa3"],["ຍົກເລີກ","#c0392b"]].map(a=>({n:a[0],c:a[1]}));
-const DONE=["ຊ່ອມແລ້ວ","ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ລູກຄ້າມາຮັບແລ້ວ"];
+const DS=[["ລໍຖ້າດຳເນີນການ","#7a8394"],["ກຳລັງດຳເນີນການ","#d4a017"],["ກຳລັງສ້ອມ","#e0781f"],["ລໍຖ້າອາໄຫຼ່","#d35400"],["ສ້ອມແລ້ວ","#1f9d6b"],["ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","#17a34a"],["ລູກຄ້າມາຮັບແລ້ວ","#1d4aa3"],["ຍົກເລີກ","#c0392b"]].map(a=>({n:a[0],c:a[1]}));
+const DONE=["ສ້ອມແລ້ວ","ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ລູກຄ້າມາຮັບແລ້ວ"];
 const COLORS=[["ດຳ","#111111"],["ຂາວ","#ffffff"],["ເງິນ","#c0c4cc"],["ທອງ","#d4af37"],["ຟ້າ","#3b82f6"],["ແດງ","#dc2626"],["ຊົມພູ","#f472b6"]];
 const DOM=["@gmail.com","@icloud.com","@outlook.com","@hotmail.com","@yahoo.com"];
 const DEF={name:"SL-Mobile",phone:"020 5655 8855",fb:"SL-mobile",addr:"",email:"",logo:"",statuses:DS,sticker:"50x30",
@@ -35,7 +36,7 @@ const tok=()=>{const a=new Uint8Array(12);crypto.getRandomValues(a);return[...a]
 async function syncPub(j){
   let t=j.pub;if(!t){t=tok();await updateDoc(J(j.id),{pub:t})}
   const is=(j.issues&&j.issues.length?j.issues:[j.issue]).filter(Boolean);
-  await setDoc(doc(fdb,"public",t),{code:j.code,status:j.status,color:sc(j.status),ready:["ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ຊ່ອມແລ້ວ"].includes(j.status),date:j.date,dev:[j.brand,j.model].filter(Boolean).join(" "),issues:is,hist:(j.hist||[]).map(h=>({s:tn(h.s),t:h.t})),shop:S.name,phone:S.phone,fb:S.fb});
+  await setDoc(doc(fdb,"public",t),{code:j.code,status:j.status,color:sc(j.status),ready:["ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ສ້ອມແລ້ວ"].includes(j.status),date:j.date,dev:[j.brand,j.model].filter(Boolean).join(" "),issues:is,hist:(j.hist||[]).map(h=>({s:tn(h.s),t:h.t})),shop:S.name,phone:S.phone,fb:S.fb});
   return t;
 }
 const syncQ=async j=>{try{return await syncPub(j)}catch(e){toast("ອັບເດດໜ້າສະຖານະບໍ່ໄດ້: "+(e.code||e.message));return j.pub||null}};
@@ -143,7 +144,7 @@ function vDet(){
 <div class="card"><div class="two">${L("ຍີ່ຫໍ້ / ລຸ້ນ / ສີ",[j.brand,j.model,j.color].filter(Boolean).join(" "))}${L("ລະຫັດປົດລັອກ",j.lock)}${L("ອາການ / ບໍລິການ",is)}${L("ສະພາບເຄື່ອງ",cs)}${L("ວັນທີ / ເວລາຮັບ",fd(j.date)+" "+ft(j.date))}${L("ຜູ້ຮັບເຄື່ອງ",j.by)}${L("ທີ່ຢູ່",j.addr)}${L("ໝາຍເຫດລູກຄ້າ",j.cnote)}${L("ໝາຍເຫດ",j.note)}${L("IMEI",j.imei)}</div></div>
 <div class="card"><b>ປ່ຽນສະຖານະ</b><div class="row"><select id="ns">${S.statuses.map(s=>`<option ${s.n===j.status?"selected":""}>${esc(s.n)}</option>`).join("")}</select><button class="btn" onclick="chSt('${j.id}')">ອັບເດດ</button></div>
 <div style="margin-top:8px;color:#667085;font-size:13px">${[...(j.hist||[]).map(h=>[h.t,"ສະຖານະ → "+tn(h.s)]),...(j.log||[]).map(l=>[l.t,"ແກ້ໄຂ: "+l.f.join(", ")])].sort((a,b)=>b[0].localeCompare(a[0])).map(h=>`${fd(h[0])} ${ft(h[0])} — ${esc(h[1])}`).join("<br>")}</div></div>
-<div class="card"><b>ພິມເອກະສານ</b><div class="row" style="margin-top:8px"><button class="btn g" onclick="pr('stk','${j.id}')">1. ສະຕິກເກີ (40x30)</button><button class="btn g" onclick="pr('rec','${j.id}')">2. ໃບຮັບເຄື່ອງ</button><button class="btn g" onclick="pr('acc','${j.id}')">3. ຂໍ້ມູນລູກຄ້າ / ລະຫັດອີເມວ</button></div></div>
+<div class="card"><b>ພິມເອກະສານ</b><div class="row" style="margin-top:8px"><button class="btn g" onclick="pr('stk','${j.id}')">1. ສະຕິກເກີ (30x40)</button><button class="btn g" onclick="pr('rec','${j.id}')">2. ໃບຮັບເຄື່ອງ</button><button class="btn g" onclick="pr('acc','${j.id}')">3. ຂໍ້ມູນລູກຄ້າ / ລະຫັດອີເມວ</button></div></div>
 <div class="card"><b>ຂໍ້ມູນລູກຄ້າ / ລະຫັດອີເມວ (ສຳລັບໃບທີ 3)</b><label>ອີເມວ</label><div class="inl"><input id="a_u" value="${esc(un)}" placeholder="ຊື່ອີເມວ"><select id="a_d">${DOM.map(d=>`<option ${d===dsel?"selected":""}>${d}</option>`).join("")}<option value="" ${dsel===""?"selected":""}>(ພິມເອງທັງໝົດ)</option></select></div>
 <label>ລະຫັດຜ່ານ (ບໍ່ບັນທຶກລົງລະບົບ ໃຊ້ສຳລັບພິມເທົ່ານັ້ນ)</label><input id="a_p" autocomplete="off">
 <div class="row" style="margin-top:8px"><button class="btn g" onclick="saveAcct('${j.id}')">ບັນທຶກອີເມວ</button><button class="btn" onclick="pr('acc','${j.id}')">ພິມໃບຂໍ້ມູນ</button></div></div>`;

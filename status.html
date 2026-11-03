@@ -27,5 +27,5 @@ if(!t||!/^[a-z0-9]{8,40}$/.test(t))nf();else onSnapshot(doc(db,"public",t),s=>{
   <label>ເຄື່ອງ</label><b>${esc(d.dev||"-")}</b><label>ວັນທີ / ເວລາຮັບເຄື່ອງ</label><b>${fd(d.date)}</b><label>ອາການ / ບໍລິການ</label><b>${esc((d.issues||[]).join(", ")||"-")}</b></div>
   <div class="c"><b>ຄວາມຄືບໜ້າ</b><div class="tl" style="margin-top:6px">${[...(d.hist||[])].reverse().map(h=>fd(h.t)+" — "+esc(h.s)).join("<br>")}</div></div>
   <div class="c" style="text-align:center">ຕິດຕໍ່ຮ້ານ: <a href="tel:${esc(String(d.phone||"").replace(/\\s/g,""))}">${esc(d.phone||"")}</a>${d.fb?"<br>Facebook: "+esc(d.fb):""}</div>`;
-},()=>nf());
+},e=>{nf();o.firstChild.insertAdjacentHTML("beforeend",'<div style="font-size:11px;color:#999;margin-top:6px">'+esc(e.code||"")+"</div>")});
 </script></body></html>
