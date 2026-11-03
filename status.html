@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="lo"><head><meta charset="utf-8"><title>ສະຖານະເຄື່ອງ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:'Phetsarath OT';src:local('Phetsarath OT'),local('PhetsarathOT'),url('PhetsarathOT.ttf') format('truetype')}
+*{box-sizing:border-box}body{margin:0;background:#f3f5f9;color:#1b2433;font:16px/1.5 'Phetsarath OT','Noto Sans Lao',system-ui,sans-serif}
+.w{max-width:460px;margin:0 auto}.hd{background:#1d4aa3;color:#fff;padding:18px 16px;text-align:center}.hd b{font-size:22px;display:block}
+.c{background:#fff;border:1px solid #dfe3ea;border-radius:14px;padding:16px;margin:12px}
+.code{font-size:28px;font-weight:700;color:#1d4aa3;text-align:center}
+.st{display:block;color:#fff;text-align:center;font-size:22px;font-weight:700;border-radius:12px;padding:12px;margin-top:10px}
+.ok{background:#e6f7ee;border:1px solid #1f9d6b;color:#146c49;border-radius:12px;padding:12px;margin-top:12px;text-align:center;font-weight:700}
+label{display:block;font-size:12px;color:#667085;margin-top:10px}.tl{color:#667085;font-size:14px}
+a{color:#1d4aa3}</style></head><body><div class="w"><div class="hd"><b id="sn">SL-Mobile</b>ກວດສະຖານະເຄື່ອງຂອງທ່ານ</div><div id="o"><div class="c" style="text-align:center">ກຳລັງໂຫຼດ…</div></div></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,doc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {firebaseConfig} from "./firebase-config.js";
+const db=getFirestore(initializeApp(firebaseConfig)),o=document.getElementById("o");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fd=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("en-GB")+" "+x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
+const t=new URLSearchParams(location.search).get("t");
+const nf=()=>{o.innerHTML='<div class="c" style="text-align:center">ບໍ່ພົບຂໍ້ມູນ ກະລຸນາກວດ QR ຫຼື ຕິດຕໍ່ຮ້ານ</div>'};
+if(!t||!/^[a-z0-9]{8,40}$/.test(t))nf();else onSnapshot(doc(db,"public",t),s=>{
+  if(!s.exists()){nf();return}const d=s.data();document.getElementById("sn").textContent=d.shop||"";document.title=(d.shop||"")+" "+d.code;
+  o.innerHTML=`<div class="c"><div class="code">${esc(d.code)}</div><span class="st" style="background:${esc(d.color||"#7a8394")}">${esc(d.status)}</span>${d.ready?'<div class="ok">✅ ເຄື່ອງຂອງທ່ານພ້ອມແລ້ວ ສາມາດມາຮັບໄດ້</div>':""}
+  <label>ເຄື່ອງ</label><b>${esc(d.dev||"-")}</b><label>ວັນທີ / ເວລາຮັບເຄື່ອງ</label><b>${fd(d.date)}</b><label>ອາການ / ບໍລິການ</label><b>${esc((d.issues||[]).join(", ")||"-")}</b></div>
+  <div class="c"><b>ຄວາມຄືບໜ້າ</b><div class="tl" style="margin-top:6px">${[...(d.hist||[])].reverse().map(h=>fd(h.t)+" — "+esc(h.s)).join("<br>")}</div></div>
+  <div class="c" style="text-align:center">ຕິດຕໍ່ຮ້ານ: <a href="tel:${esc(String(d.phone||"").replace(/\\s/g,""))}">${esc(d.phone||"")}</a>${d.fb?"<br>Facebook: "+esc(d.fb):""}</div>`;
+},()=>nf());
+</script></body></html>
