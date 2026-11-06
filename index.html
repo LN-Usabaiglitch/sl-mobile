@@ -3,12 +3,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261106">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"><link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"><link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 </head><body>
+<div id="boot" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font:16px sans-serif;color:#12306b;background:#f3f5f9;z-index:50;padding:20px">ກຳລັງໂຫຼດ…</div>
+<script>
+function bootErr(m){var b=document.getElementById("boot");if(b&&b.style.display!=="none"){b.dataset.err=1;b.innerHTML="⚠️ ເປີດລະບົບບໍ່ໄດ້<br><small>"+String(m).replace(/</g,"&lt;")+"</small><br><br><small>ລອງ: ເປີດໃນແທັບສ່ວນຕົວ (Private) ຫຼື ລ້າງຂໍ້ມູນເວັບໄຊຂອງ Safari ແລ້ວເປີດໃໝ່<br>ແລະກວດວ່າອັບໂຫຼດໄຟລ໌ຄົບທຸກໄຟລ໌</small>"}}
+addEventListener("error",function(e){bootErr(e.message||("ໂຫຼດໄຟລ໌ບໍ່ໄດ້: "+((e.target&&(e.target.src||e.target.href))||"")))},true);
+addEventListener("unhandledrejection",function(e){bootErr(e.reason&&e.reason.message||e.reason)});
+setTimeout(function(){var b=document.getElementById("boot");if(b&&b.style.display!=="none"&&!b.dataset.err)b.insertAdjacentHTML("beforeend","<br><small>ໃຊ້ເວລານານ — ກວດອິນເຕີເນັດ</small>")},8000);
+</script>
 <div id="login" style="display:none"><form class="card" id="lf"><h2>SL-Mobile</h2><label>ອີເມວ</label><input id="le" type="email" autocomplete="username" required><label>ລະຫັດຜ່ານ</label><input id="lp" type="password" autocomplete="current-password" required><button class="btn" style="width:100%;margin-top:12px">ເຂົ້າສູ່ລະບົບ</button><p id="lerr" style="color:#c0392b"></p></form></div>
 <div id="app" style="display:none"><nav id="nav"></nav><main id="m"></main></div>
 <div id="toast"></div>
-<script type="module" src="app.js"></script>
+<script type="module" src="app.js?v=20261106"></script>
 </body></html>

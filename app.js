@@ -1,10 +1,10 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,updatePassword,reauthenticateWithCredential,EmailAuthProvider,verifyBeforeUpdateEmail} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {getFirestore,collection,doc,onSnapshot,setDoc,updateDoc,deleteDoc,runTransaction,getDocs} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {firebaseConfig} from "./firebase-config.js";
-import {printDoc,patInner,patSvg,isIOS} from "./print.js";
+import {getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,updateDoc,deleteDoc,runTransaction,getDocs} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {firebaseConfig} from "./firebase-config.js?v=20261106";
+import {printDoc,patInner,patSvg,isIOS} from "./print.js?v=20261106";
 
-const fapp=initializeApp(firebaseConfig),auth=getAuth(fapp),fdb=getFirestore(fapp);
+const fapp=initializeApp(firebaseConfig),auth=getAuth(fapp),fdb=(()=>{try{return initializeFirestore(fapp,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){return getFirestore(fapp)}})();
 const SH=doc(fdb,"settings","shop"),J=id=>doc(fdb,"jobs",id);
 
 // ---- ค่าเริ่มต้น (ພາສາລາວ) ----
@@ -25,7 +25,7 @@ const DEF={name:"SL-Mobile",phone:"020 5655 8855",fb:"SL-mobile",addr:"",email:"
 function normS(d){const s={...DEF,...d},seen=new Set();s.colors=(s.colors&&s.colors.length?s.colors:DEFCOLORS);s.statuses=(s.statuses||DS).map(x=>({n:tn(x.n),c:x.c,d:x.d===undefined?tn(x.n)==="ລູກຄ້າມາຮັບແລ້ວ":!!x.d})).filter(x=>!seen.has(x.n)&&seen.add(x.n));return s}
 const LBL={code:"ເລກງານ",pattern:"ລວດລາຍ",phone:"ເບີໂທ",cname:"ຊື່",addr:"ທີ່ຢູ່",cnote:"ໝາຍເຫດລູກຄ້າ",brand:"ຍີ່ຫໍ້",model:"ລຸ້ນ",color:"ສີ",lock:"ລະຫັດປົດລັອກ",issues:"ອາການ/ບໍລິການ",conds:"ສະພາບເຄື່ອງ",by:"ຜູ້ຮັບ",note:"ໝາຍເຫດ"};
 
-let dirty=false,dsel=new Set(),so="sink",jobs=[],S=normS({}),view="jobs",cur=null,q="",fs="",unsubs=[];
+let loaded=false,dirty=false,dsel=new Set(),so="sink",jobs=[],S=normS({}),view="jobs",cur=null,q="",fs="",unsubs=[];
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fd=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("en-GB")},ft=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
 const sc=n=>(S.statuses.find(s=>s.n===n)||{c:"#7a8394"}).c,bd=n=>`<span class="badge" style="background:${sc(n)}">${esc(n)}</span>`;
@@ -54,11 +54,12 @@ function qerr(e,pre){if(e.code==="resource-exhausted")quota();else toast(pre+(e.
 // ---- Auth ----
 $("#lf").onsubmit=async e=>{e.preventDefault();$("#lerr").textContent="";try{await signInWithEmailAndPassword(auth,$("#le").value.trim(),$("#lp").value)}catch(x){$("#lerr").textContent="ອີເມວ ຫຼື ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ"}};
 onAuthStateChanged(auth,u=>{
+  const bt=document.getElementById("boot");if(bt)bt.style.display="none";
   unsubs.forEach(f=>f());unsubs=[];
   if(!u){$("#app").style.display="none";$("#login").style.display="flex";return}
   $("#login").style.display="none";$("#app").style.display="flex";
   unsubs.push(onSnapshot(SH,s=>{cnt(1);S=normS(s.exists()?s.data():{});refresh()},e=>qerr(e,"ອ່ານການຕັ້ງຄ່າບໍ່ໄດ້: ")));
-  unsubs.push(onSnapshot(collection(fdb,"jobs"),s=>{cnt(s.docChanges().length);jobs=s.docs.map(d=>{const x={...d.data(),id:d.id};x.status=tn(x.status);return x}).sort((a,b)=>(b.code||"").localeCompare(a.code||""));refresh()},e=>qerr(e,"ອ່ານຂໍ້ມູນບໍ່ໄດ້ (ກວດ Rules/UID): ")));
+  unsubs.push(onSnapshot(collection(fdb,"jobs"),s=>{loaded=true;cnt(s.docChanges().length);jobs=s.docs.map(d=>{const x={...d.data(),id:d.id};x.status=tn(x.status);return x}).sort((a,b)=>(b.code||"").localeCompare(a.code||""));refresh()},e=>qerr(e,"ອ່ານຂໍ້ມູນບໍ່ໄດ້ (ກວດ Rules/UID): ")));
 });
 function navDraw(){
   const it=[["jobs","📱 ງານທັງໝົດ"],["dash","📊 ພາບລວມ"],["xls","📥 Excel"],["set","⚙️ ຕັ້ງຄ່າ"]],on=(view==="form"||view==="det")?"jobs":view;
@@ -93,7 +94,7 @@ function sortJ(L){const sk=new Set(S.statuses.filter(x=>x.d).map(x=>x.n)),cd=(a,
   if(so==="status"){const ix=n=>{const i=S.statuses.findIndex(x=>x.n===n);return i<0?99:i};return[...L].sort((a,b)=>ix(a.status)-ix(b.status)||cd(a,b))}
   return[...L].sort((a,b)=>(sk.has(a.status)-sk.has(b.status))||cd(a,b))}
 function rows(){const e=$("#tb");if(!e)return;const L=sortJ(filt());
-  e.innerHTML=L.slice(0,200).map(jrow).join("")||'<p style="color:var(--mu)">ບໍ່ພົບລາຍການ</p>'}
+  e.innerHTML=L.slice(0,200).map(jrow).join("")||`<p style="color:var(--mu)">${loaded?"ບໍ່ພົບລາຍການ":"ກຳລັງໂຫຼດຂໍ້ມູນ…"}</p>`}
 function vJobs(){
   $("#m").innerHTML=`<button class="btn big" onclick="go('form')">+ ຮັບເຄື່ອງໃໝ່</button>
 <div class="card"><div class="row"><input id="qi" placeholder="ຄົ້ນຫາ: ເບີໂທ / ຊື່ / ລະຫັດ (ເຊັ່ນ 150)" value="${esc(q)}" oninput="setq(this.value)"><select onchange="setfs(this.value)"><option value="">ທຸກສະຖານະ</option>${S.statuses.map(s=>`<option ${fs===s.n?"selected":""}>${esc(s.n)}</option>`).join("")}</select><select onchange="setso(this.value)">${[["sink","ລຽງ: ງານທີ່ຮັບແລ້ວລົງລຸ່ມ"],["new","ໃໝ່ສຸດກ່ອນ"],["old","ເກົ່າສຸດກ່ອນ"],["status","ຕາມສະຖານະ"]].map(o=>`<option value="${o[0]}" ${so===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></div><div id="tb" style="margin-top:8px"></div></div>`;rows();

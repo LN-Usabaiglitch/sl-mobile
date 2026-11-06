@@ -16,7 +16,7 @@ a{color:#1d4aa3}</style></head><body><div class="w"><div class="hd"><b id="sn">S
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getFirestore,doc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {firebaseConfig} from "./firebase-config.js";
+import {firebaseConfig} from "./firebase-config.js?v=20261106";
 const db=getFirestore(initializeApp(firebaseConfig)),o=document.getElementById("o");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fd=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("en-GB")+" "+x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
