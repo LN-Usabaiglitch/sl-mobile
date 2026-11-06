@@ -40,3 +40,4 @@ hr{border:0;border-top:1px solid var(--bd);margin:12px 0}
 .chip.sw{padding:9px 15px;font-size:15px}.chip.sw i{width:26px;height:26px}
 .ph{position:relative}.ph img{width:96px;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--bd);cursor:pointer;display:block}
 .ph b{position:absolute;top:-7px;right:-7px;background:#c0392b;color:#fff;border-radius:50%;width:22px;height:22px;text-align:center;line-height:22px;cursor:pointer}
+.stat.on{outline:3px solid #1d4aa3;background:#eef3fc}

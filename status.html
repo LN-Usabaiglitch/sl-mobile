@@ -20,12 +20,14 @@ import {firebaseConfig} from "./firebase-config.js";
 const db=getFirestore(initializeApp(firebaseConfig)),o=document.getElementById("o");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fd=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("en-GB")+" "+x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
+const stp=(t,a)=>a&&((a.items&&a.items.length)||a.note)?`<div class="c"><b>${t}</b>${a.t?`<div class="tl">${fd(a.t)}</div>`:""}<div style="margin-top:6px">${(a.items||[]).map(x=>"✔ "+esc(x)).join("<br>")}</div>${a.note?`<div style="margin-top:6px;color:#444">${esc(a.note)}</div>`:""}</div>`:"";
 const t=new URLSearchParams(location.search).get("t");
 const nf=()=>{o.innerHTML='<div class="c" style="text-align:center">ບໍ່ພົບຂໍ້ມູນ ກະລຸນາກວດ QR ຫຼື ຕິດຕໍ່ຮ້ານ</div>'};
 if(!t||!/^[a-z0-9]{8,40}$/.test(t))nf();else onSnapshot(doc(db,"public",t),s=>{
   if(!s.exists()){nf();return}const d=s.data();document.getElementById("sn").textContent=d.shop||"";document.title=(d.shop||"")+" "+d.code;
   o.innerHTML=`<div class="c"><div class="code">${esc(d.code)}</div><span class="st" style="background:${esc(d.color||"#7a8394")}">${esc(d.status)}</span>${d.ready?'<div class="ok">✅ ເຄື່ອງຂອງທ່ານພ້ອມແລ້ວ ສາມາດມາຮັບໄດ້</div>':""}
   <label>ເຄື່ອງ</label><b>${esc(d.dev||"-")}</b><label>ວັນທີ / ເວລາຮັບເຄື່ອງ</label><b>${fd(d.date)}</b><label>ອາການ / ບໍລິການ</label><b>${esc((d.issues||[]).join(", ")||"-")}</b></div>
+  ${stp("ຂັ້ນຕອນ 1: ສະພາບເຄື່ອງກ່ອນຮັບ",{items:d.conds})}${stp("ຂັ້ນຕອນ 2: ຫຼັງແກະເຄື່ອງ",d.s2)}${stp("ຂັ້ນຕອນ 3: ຫຼັງສ້ອມສຳເລັດ",d.s3)}
   <div class="c"><b>ຄວາມຄືບໜ້າ</b><div class="tl" style="margin-top:6px">${[...(d.hist||[])].reverse().map(h=>fd(h.t)+" — "+esc(h.s)).join("<br>")}</div></div>
   <div class="c" style="text-align:center">ຕິດຕໍ່ຮ້ານ: <a href="tel:${esc(String(d.phone||"").replace(/\\s/g,""))}">${esc(d.phone||"")}</a>${d.fb?"<br>Facebook: "+esc(d.fb):""}</div>`;
 },e=>{nf();o.firstChild.insertAdjacentHTML("beforeend",'<div style="font-size:11px;color:#999;margin-top:6px">'+esc(e.code||"")+"</div>")});

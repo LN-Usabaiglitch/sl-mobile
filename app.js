@@ -2,7 +2,7 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,updatePassword,reauthenticateWithCredential,EmailAuthProvider,verifyBeforeUpdateEmail} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,collection,doc,onSnapshot,setDoc,updateDoc,deleteDoc,runTransaction,getDocs} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import {firebaseConfig} from "./firebase-config.js";
-import {printDoc,patInner,patSvg} from "./print.js";
+import {printDoc,patInner,patSvg,isIOS} from "./print.js";
 
 const fapp=initializeApp(firebaseConfig),auth=getAuth(fapp),fdb=getFirestore(fapp);
 const SH=doc(fdb,"settings","shop"),J=id=>doc(fdb,"jobs",id);
@@ -11,7 +11,7 @@ const SH=doc(fdb,"settings","shop"),J=id=>doc(fdb,"jobs",id);
 const T={"รับเครื่องแล้ว":"ລໍຖ້າດຳເນີນການ","รอตรวจสอบ":"ລໍຖ້າດຳເນີນການ","กำลังดำเนินการ":"ກຳລັງດຳເນີນການ","กำลังซ่อม":"ກຳລັງສ້ອມ","รออะไหล่":"ລໍຖ້າອາໄຫຼ່","ซ่อมเสร็จแล้ว":"ສ້ອມແລ້ວ","พร้อมให้ลูกค้ามารับเครื่อง":"ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ลูกค้ามารับเครื่องแล้ว":"ລູກຄ້າມາຮັບແລ້ວ","ยกเลิกงาน":"ຍົກເລີກ"};
 T["ຊ່ອມແລ້ວ"]="ສ້ອມແລ້ວ";T["ກຳລັງຊ່ອມ"]="ກຳລັງສ້ອມ";
 const tn=n=>T[n]||n;
-const DS=[["ລໍຖ້າດຳເນີນການ","#7a8394"],["ກຳລັງດຳເນີນການ","#d4a017"],["ກຳລັງສ້ອມ","#e0781f"],["ລໍຖ້າອາໄຫຼ່","#d35400"],["ສ້ອມແລ້ວ","#1f9d6b"],["ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","#17a34a"],["ລູກຄ້າມາຮັບແລ້ວ","#1d4aa3"],["ຍົກເລີກ","#c0392b"]].map(a=>({n:a[0],c:a[1]}));
+const DS=[["ລໍຖ້າດຳເນີນການ","#7a8394"],["ກຳລັງດຳເນີນການ","#d4a017"],["ກຳລັງສ້ອມ","#e0781f"],["ລໍຖ້າອາໄຫຼ່","#d35400"],["ສ້ອມແລ້ວ","#1f9d6b"],["ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","#17a34a"],["ລູກຄ້າມາຮັບແລ້ວ","#1d4aa3"],["ຍົກເລີກ","#c0392b"]].map(a=>({n:a[0],c:a[1],d:a[0]==="ລູກຄ້າມາຮັບແລ້ວ"}));
 const DONE=["ສ້ອມແລ້ວ","ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ລູກຄ້າມາຮັບແລ້ວ"];
 const DEFCOLORS=[["ດຳ","#111111"],["ຂາວ","#ffffff"],["ເງິນ","#c0c4cc"],["ທອງ","#d4af37"],["ຟ້າ","#3b82f6"],["ແດງ","#dc2626"],["ຊົມພູ","#f472b6"]].map(a=>({n:a[0],c:a[1]}));
 const DOM=["@gmail.com","@icloud.com","@outlook.com","@hotmail.com","@yahoo.com"];
@@ -19,11 +19,13 @@ const DEF={name:"SL-Mobile",phone:"020 5655 8855",fb:"SL-mobile",addr:"",email:"
  brands:["iPhone","Samsung","Oppo","Vivo","Xiaomi","Redmi","Huawei","Honor","Realme","OnePlus","Infinix","Tecno","Itel","Google Pixel","Nokia","Motorola","Sony","Asus"],
  issues:["ປ່ຽນໜ້າຈໍ","ກວດເຊັກທັງໝົດ","ກວດເຊັກລຳໂພງ","ປ່ຽນແບັດເຕີຣີ","ຕັ້ງ ID / ອີເມວ","ປ່ຽນຝາຫຼັງ","ປ່ຽນຊ່ອງສາກ","ລົງໂປຣແກຣມ / ອັບເດດ","ກູ້ຂໍ້ມູນ"],
  conds:["ສະພາບດີ","ໜ້າຈໍແຕກ","ຝາຫຼັງແຕກ","ຕົວເຄື່ອງມີຮອຍ / ບຸບ","ເປີດບໍ່ຕິດ","ຕົກນ້ຳ"],
- staff:[],colors:DEFCOLORS};
-function normS(d){const s={...DEF,...d},seen=new Set();s.colors=(s.colors&&s.colors.length?s.colors:DEFCOLORS);s.statuses=(s.statuses||DS).map(x=>({n:tn(x.n),c:x.c})).filter(x=>!seen.has(x.n)&&seen.add(x.n));return s}
+ staff:[],colors:DEFCOLORS,
+ foundL:["ປົກກະຕິດີ ຕາມທີ່ລູກຄ້າແຈ້ງ","ສະແກນນິ້ວມືຂາດ","ເມນບອດມີບັນຫາ","ແບັດເຕີຣີເສື່ອມ","ມີນ້ຳເຂົ້າ / ຂຶ້ນສະນິມ","ສາຍແພຂາດ","ຊ່ອງສາກເສຍ","ລຳໂພງ / ໄມ ເສຍ"],
+ afterL:["ທົດສອບແລ້ວ ໃຊ້ງານໄດ້ປົກກະຕິ","ປ່ຽນໜ້າຈໍແລ້ວ","ປ່ຽນແບັດເຕີຣີແລ້ວ","ສະແກນນິ້ວມືໃຊ້ໄດ້","ລຳໂພງ / ໄມ ໃຊ້ໄດ້","ທຳຄວາມສະອາດແລ້ວ"]};
+function normS(d){const s={...DEF,...d},seen=new Set();s.colors=(s.colors&&s.colors.length?s.colors:DEFCOLORS);s.statuses=(s.statuses||DS).map(x=>({n:tn(x.n),c:x.c,d:x.d===undefined?tn(x.n)==="ລູກຄ້າມາຮັບແລ້ວ":!!x.d})).filter(x=>!seen.has(x.n)&&seen.add(x.n));return s}
 const LBL={code:"ເລກງານ",pattern:"ລວດລາຍ",phone:"ເບີໂທ",cname:"ຊື່",addr:"ທີ່ຢູ່",cnote:"ໝາຍເຫດລູກຄ້າ",brand:"ຍີ່ຫໍ້",model:"ລຸ້ນ",color:"ສີ",lock:"ລະຫັດປົດລັອກ",issues:"ອາການ/ບໍລິການ",conds:"ສະພາບເຄື່ອງ",by:"ຜູ້ຮັບ",note:"ໝາຍເຫດ"};
 
-let jobs=[],S=normS({}),view="jobs",cur=null,q="",fs="",unsubs=[];
+let dirty=false,dsel=new Set(),so="sink",jobs=[],S=normS({}),view="jobs",cur=null,q="",fs="",unsubs=[];
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fd=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("en-GB")},ft=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
 const sc=n=>(S.statuses.find(s=>s.n===n)||{c:"#7a8394"}).c,bd=n=>`<span class="badge" style="background:${sc(n)}">${esc(n)}</span>`;
@@ -36,7 +38,7 @@ const tok=()=>{const a=new Uint8Array(12);crypto.getRandomValues(a);return[...a]
 async function syncPub(j){
   let t=j.pub;if(!t){t=tok();await updateDoc(J(j.id),{pub:t})}
   const is=(j.issues&&j.issues.length?j.issues:[j.issue]).filter(Boolean);
-  await setDoc(doc(fdb,"public",t),{code:j.code,status:j.status,color:sc(j.status),ready:["ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ສ້ອມແລ້ວ"].includes(j.status),date:j.date,dev:[j.brand,j.model].filter(Boolean).join(" "),issues:is,hist:(j.hist||[]).map(h=>({s:tn(h.s),t:h.t})),shop:S.name,phone:S.phone,fb:S.fb});
+  await setDoc(doc(fdb,"public",t),{code:j.code,status:j.status,color:sc(j.status),ready:["ພ້ອມໃຫ້ລູກຄ້າມາຮັບ","ສ້ອມແລ້ວ"].includes(j.status),date:j.date,dev:[j.brand,j.model].filter(Boolean).join(" "),issues:is,hist:(j.hist||[]).map(h=>({s:tn(h.s),t:h.t})),conds:(j.conds&&j.conds.length?j.conds:[j.cond]).filter(Boolean),s2:j.step2||null,s3:j.step3||null,shop:S.name,phone:S.phone,fb:S.fb});
   return t;
 }
 const syncQ=async j=>{try{return await syncPub(j)}catch(e){toast("ອັບເດດໜ້າສະຖານະບໍ່ໄດ້: "+(e.code||e.message));return j.pub||null}};
@@ -59,19 +61,21 @@ onAuthStateChanged(auth,u=>{
   unsubs.push(onSnapshot(collection(fdb,"jobs"),s=>{cnt(s.docChanges().length);jobs=s.docs.map(d=>{const x={...d.data(),id:d.id};x.status=tn(x.status);return x}).sort((a,b)=>(b.code||"").localeCompare(a.code||""));refresh()},e=>qerr(e,"ອ່ານຂໍ້ມູນບໍ່ໄດ້ (ກວດ Rules/UID): ")));
 });
 function navDraw(){
-  const it=[["jobs","📱 ງານທັງໝົດ"],["dash","📊 ພາບລວມ"],["set","⚙️ ຕັ້ງຄ່າ"]],on=(view==="form"||view==="det")?"jobs":view;
+  const it=[["jobs","📱 ງານທັງໝົດ"],["dash","📊 ພາບລວມ"],["xls","📥 Excel"],["set","⚙️ ຕັ້ງຄ່າ"]],on=(view==="form"||view==="det")?"jobs":view;
   $("#nav").innerHTML="<h1>"+esc(S.name)+"</h1>"+it.map(i=>`<button class="${on===i[0]?"on":""}" onclick="go('${i[0]}')">${i[1]}</button>`).join("")+`<span class="sp"></span><button onclick="logout()">🚪 ອອກ</button>`;
 }
-function draw(){navDraw();({dash:vDash,jobs:vJobs,form:vForm,det:vDet,set:vSet})[view]()}
+function draw(){navDraw();({dash:vDash,jobs:vJobs,form:vForm,det:vDet,set:vSet,xls:vXls})[view]()}
 function refresh(){
   navDraw();
   if(view==="form")return;
+  if(view==="xls"){xCnt();return}
+  if(view==="det"&&dirty)return;
   if(view==="jobs"&&$("#tb")){rows();return}
   const a=document.activeElement;
   if(view==="det"&&a&&$("#m").contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
   draw();
 }
-const go=(v,id)=>{view=v;cur=id||null;draw();scrollTo(0,0)};
+const go=(v,id)=>{dirty=false;view=v;cur=id||null;draw();scrollTo(0,0)};
 const logout=()=>signOut(auth);
 const stat=s=>{fs=s;q="";go("jobs")};
 
@@ -83,20 +87,28 @@ function filt(){
     if(/^\d+$/.test(dg)){const n=parseInt(dg,10),cn=parseInt((j.code||"").replace(/\D/g,""),10);return(j.phone||"").includes(dg)||(n>0&&cn===n)}
     return[j.code,j.cname,j.phone,j.brand,j.model].join(" ").toLowerCase().includes(t)});
 }
-function rows(){const e=$("#tb");if(!e)return;const L=filt();
-  e.innerHTML=L.slice(0,200).map(j=>`<div class="jr" onclick="go('det','${j.id}')"><div class="cd">${esc(j.code)}</div><div class="nm"><b>${esc(j.cname)}</b><small>${esc(j.phone)}${j.brand||j.model?" · "+esc(((j.brand||"")+" "+(j.model||"")).trim()):""}${j.tech?" · 🔧"+esc(j.tech):""}</small></div>${bd(j.status)}</div>`).join("")||'<p style="color:var(--mu)">ບໍ່ພົບລາຍການ</p>'}
+const jrow=j=>`<div class="jr" onclick="go('det','${j.id}')"><div class="cd">${esc(j.code)}</div><div class="nm"><b>${esc(j.cname)}</b><small>${esc(j.phone)}${j.brand||j.model?" · "+esc(((j.brand||"")+" "+(j.model||"")).trim()):""}${j.tech?" · 🔧"+esc(j.tech):""}</small></div>${bd(j.status)}</div>`;
+function sortJ(L){const sk=new Set(S.statuses.filter(x=>x.d).map(x=>x.n)),cd=(a,b)=>(b.code||"").localeCompare(a.code||"");
+  if(so==="old")return[...L].sort((a,b)=>-cd(a,b));if(so==="new")return[...L].sort(cd);
+  if(so==="status"){const ix=n=>{const i=S.statuses.findIndex(x=>x.n===n);return i<0?99:i};return[...L].sort((a,b)=>ix(a.status)-ix(b.status)||cd(a,b))}
+  return[...L].sort((a,b)=>(sk.has(a.status)-sk.has(b.status))||cd(a,b))}
+function rows(){const e=$("#tb");if(!e)return;const L=sortJ(filt());
+  e.innerHTML=L.slice(0,200).map(jrow).join("")||'<p style="color:var(--mu)">ບໍ່ພົບລາຍການ</p>'}
 function vJobs(){
   $("#m").innerHTML=`<button class="btn big" onclick="go('form')">+ ຮັບເຄື່ອງໃໝ່</button>
-<div class="card"><div class="row"><input id="qi" placeholder="ຄົ້ນຫາ: ເບີໂທ / ຊື່ / ລະຫັດ (ເຊັ່ນ 150)" value="${esc(q)}" oninput="setq(this.value)"><select onchange="setfs(this.value)"><option value="">ທຸກສະຖານະ</option>${S.statuses.map(s=>`<option ${fs===s.n?"selected":""}>${esc(s.n)}</option>`).join("")}</select></div><div id="tb" style="margin-top:8px"></div></div>`;rows();
+<div class="card"><div class="row"><input id="qi" placeholder="ຄົ້ນຫາ: ເບີໂທ / ຊື່ / ລະຫັດ (ເຊັ່ນ 150)" value="${esc(q)}" oninput="setq(this.value)"><select onchange="setfs(this.value)"><option value="">ທຸກສະຖານະ</option>${S.statuses.map(s=>`<option ${fs===s.n?"selected":""}>${esc(s.n)}</option>`).join("")}</select><select onchange="setso(this.value)">${[["sink","ລຽງ: ງານທີ່ຮັບແລ້ວລົງລຸ່ມ"],["new","ໃໝ່ສຸດກ່ອນ"],["old","ເກົ່າສຸດກ່ອນ"],["status","ຕາມສະຖານະ"]].map(o=>`<option value="${o[0]}" ${so===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></div><div id="tb" style="margin-top:8px"></div></div>`;rows();
 }
-const setq=v=>{q=v;rows()},setfs=v=>{fs=v;rows()};
+const setq=v=>{q=v;rows()},setfs=v=>{fs=v;rows()},setso=v=>{so=v;rows()};
 
 // ---- ภาพรวม ----
 function vDash(){
-  const c=S.statuses.map(s=>[s.n,s.c,jobs.filter(j=>j.status===s.n).length]);
+  const c=S.statuses.map(x=>[x.n,x.c,jobs.filter(j=>j.status===x.n).length]),all=dsel.size===S.statuses.length&&dsel.size>0;
+  const L=sortJ(all?jobs:jobs.filter(j=>dsel.has(j.status)));
   $("#m").innerHTML=`<button class="btn big" onclick="go('form')">+ ຮັບເຄື່ອງໃໝ່</button><h2>ພາບລວມ</h2>
-<div class="grid"><div class="stat" style="border-left-color:#12306b" onclick="stat('')"><b>${jobs.length}</b><span>ເຄື່ອງທັງໝົດ</span></div>${c.map(x=>`<div class="stat" style="border-left-color:${x[1]}" data-s="${esc(x[0])}" onclick="stat(this.dataset.s)"><b>${x[2]}</b><span>${esc(x[0])}</span></div>`).join("")}</div>`;
+<div class="grid"><div class="stat${all?" on":""}" style="border-left-color:#12306b" onclick="dall()"><b>${jobs.length}</b><span>ທັງໝົດ</span></div>${c.map(x=>`<div class="stat${dsel.has(x[0])?" on":""}" style="border-left-color:${x[1]}" data-s="${esc(x[0])}" onclick="dtg(this.dataset.s)"><b>${x[2]}</b><span>${esc(x[0])}</span></div>`).join("")}</div>
+<div class="card" style="margin-top:12px">${dsel.size?`<b>${L.length} ງານ</b>`+L.slice(0,200).map(jrow).join(""):'<span style="color:var(--mu)">ແຕະບັດສະຖານະ (ເລືອກໄດ້ຫຼາຍອັນ) ເພື່ອເບິ່ງລາຍຊື່ງານ — ແຕະ "ທັງໝົດ" ເພື່ອເບິ່ງທຸກງານ</span>'}</div>`;
 }
+const dtg=n=>{dsel.has(n)?dsel.delete(n):dsel.add(n);vDash()},dall=()=>{if(dsel.size===S.statuses.length)dsel.clear();else S.statuses.forEach(x=>dsel.add(x.n));vDash()};
 
 // ---- ฟอร์มรับเครื่อง ----
 function chips(id,list,sel,multi,col){
@@ -106,13 +118,13 @@ const pl=(k,t)=>`<label>${t} <a class="pl" onclick="qt('${k}')">＋</a></label><
 function tg(b){const p=b.parentElement;if(p.dataset.m==="1")b.classList.toggle("on");else{const was=b.classList.contains("on");p.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));if(!was)b.classList.add("on")}}
 const getSel=id=>[...document.querySelectorAll("#"+id+" .chip.on")].map(b=>b.dataset.v);
 function opts(list,val,ph){const all=[...list,...(val&&!list.includes(val)?[val]:[])];return`<option value="">${ph}</option>`+all.map(v=>`<option ${v===val?"selected":""}>${esc(v)}</option>`).join("")}
-const PC=[17,50,83];let pat=[],pics=[],gone=[],picCache={},saving=false;
+const PC=[17,50,83];let pat=[],picCache={},saving=false;const P={1:{p:[],g:[]},2:{p:[],g:[]},3:{p:[],g:[]}};
 function vForm(){
   const j=cur?jobs.find(x=>x.id===cur):{},v=k=>esc(j[k]||"");
   const is=j.issues||(j.issue?[j.issue]:[]),cs=j.conds||(j.cond?[j.cond]:[]),by=cur?(j.by||""):lsGet("lastBy");
   const st=cur?j.status:((S.statuses.find(s=>s.n==="ລໍຖ້າດຳເນີນການ")||S.statuses[0]).n);
   const num=cur?(parseInt((j.code||"").replace(/\D/g,""))||""):(jobs.reduce((a,x)=>Math.max(a,parseInt((x.code||"").replace(/\D/g,""))||0),0)+1);
-  pat=[...(j.pattern||[])];pics=[];gone=[];
+  pat=[...(j.pattern||[])];P[1]={p:[],g:[]};
   $("#m").innerHTML=`<h2>${cur?"ແກ້ໄຂງານ "+esc(j.code):"ຮັບເຄື່ອງໃໝ່"}</h2><div class="card"><datalist id="dl">${[...new Map(jobs.map(x=>[x.phone,x])).values()].map(x=>`<option value="${esc(x.phone)}">${esc(x.cname)}</option>`).join("")}</datalist>
 <label>ເລກງານ (ແກ້ໄຂໄດ້)</label><div class="inl"><span style="align-self:center;font-weight:700">SL-</span><input id="f_code" inputmode="numeric" value="${num}" oninput="this.value=this.value.replace(/\D/g,'')"></div>
 <hr><b>ລູກຄ້າ</b><div class="two"><div><label>ເບີໂທ * (ຕົວເລກເທົ່ານັ້ນ)</label><input id="f_phone" list="dl" inputmode="numeric" value="${v("phone")}" oninput="this.value=this.value.replace(/\D/g,'')" onchange="fill(this.value)"></div><div><label>ຊື່ລູກຄ້າ *</label><input id="f_cname" value="${v("cname")}"></div></div>
@@ -141,16 +153,31 @@ function setupPad(){const p=$("#pad");let down=false;
 const padClear=()=>{pat=[];drawPad()};
 // รูปภาพ
 function resize(f){return new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,960/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);let q=.62,d=c.toDataURL("image/jpeg",q);while(d.length>520000&&q>.3){q-=.1;d=c.toDataURL("image/jpeg",q)}ok(d)};im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("img"))};im.src=u})}
-async function addPics(fs){for(const f of fs){if(pics.length>=6){toast("ສູງສຸດ 6 ຮູບຕໍ່ງານ");break}try{pics.push({d:await resize(f)})}catch(e){toast("ອ່ານຮູບບໍ່ໄດ້")}}drawPics()}
-function drawPics(){const e=$("#pics");if(e)e.innerHTML=pics.map((p,i)=>`<div class="ph"><img src="${p.d}"><b onclick="rmPic(${i})">×</b></div>`).join("")}
-function rmPic(i){const p=pics[i];if(p.id)gone.push(p.id);pics.splice(i,1);drawPics()}
-const phLoad=async id=>{if(!picCache[id]){const s=await getDocs(collection(fdb,"jobs",id,"photos"));picCache[id]=s.docs.map(d=>({id:d.id,d:d.data().d,t:d.data().t||""})).sort((a,b)=>a.t.localeCompare(b.t));cnt(s.size)}return picCache[id]};
-async function loadPics(id){try{const L=await phLoad(id);if(view==="form"&&cur===id){pics=[...L.map(p=>({id:p.id,d:p.d})),...pics.filter(x=>!x.id)];drawPics()}}catch(e){}}
-async function showPics(id){try{const L=await phLoad(id);if(!L.length||view!=="det"||cur!==id||!$("#phc"))return;$("#phc").style.display="block";$("#phl").innerHTML=L.map((p,i)=>`<div class="ph"><img src="${p.d}" onclick="viewPic(${i})"></div>`).join("")}catch(e){}}
-function viewPic(i){const p=(picCache[cur]||[])[i];if(!p)return;const d=document.createElement("div");d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:30;display:flex;align-items:center;justify-content:center";d.onclick=()=>d.remove();d.innerHTML=`<img src="${p.d}" style="max-width:96vw;max-height:96vh">`;document.body.appendChild(d)}
-async function savePics(id){for(const g of gone)await deleteDoc(doc(fdb,"jobs",id,"photos",g));for(const p of pics.filter(x=>!x.id))await setDoc(doc(collection(fdb,"jobs",id,"photos")),{d:p.d,t:new Date().toISOString()});delete picCache[id]}
+async function addPics(fs,st=1){const a=P[st].p;for(const f of fs){if(a.length>=6){toast("ສູງສຸດ 6 ຮູບຕໍ່ຂັ້ນຕອນ");break}try{a.push({d:await resize(f)})}catch(e){toast("ອ່ານຮູບບໍ່ໄດ້")}}drawPics(st)}
+function drawPics(st=1){const e=$("#pics"+(st>1?st:""));if(e)e.innerHTML=P[st].p.map((p,i)=>`<div class="ph"><img src="${p.d}"><b onclick="rmPic(${i},${st})">×</b></div>`).join("")}
+function rmPic(i,st=1){const p=P[st].p[i];if(p.id)P[st].g.push(p.id);P[st].p.splice(i,1);drawPics(st)}
+const phLoad=async id=>{if(!picCache[id]){const s=await getDocs(collection(fdb,"jobs",id,"photos"));picCache[id]=s.docs.map(d=>({id:d.id,d:d.data().d,t:d.data().t||"",s:d.data().s||1})).sort((a,b)=>a.t.localeCompare(b.t));cnt(s.size)}return picCache[id]};
+async function loadPics(id){try{const L=await phLoad(id);if(view==="form"&&cur===id){P[1].p=[...L.filter(p=>p.s===1).map(p=>({id:p.id,d:p.d})),...P[1].p.filter(x=>!x.id)];drawPics(1)}}catch(e){}}
+async function showPics(id){try{const L=await phLoad(id);if(view!=="det"||cur!==id)return;const a=L.filter(p=>p.s===1);
+  if(a.length&&$("#phc")){$("#phc").style.display="block";$("#phl").innerHTML=a.map(p=>`<div class="ph"><img src="${p.d}" onclick="viewPic('${p.id}')"></div>`).join("")}
+  for(const n of[2,3]){if(!$("#pics"+n))continue;P[n]={p:L.filter(p=>p.s===n).map(p=>({id:p.id,d:p.d})),g:[]};drawPics(n)}}catch(e){}}
+function viewPic(pid){const p=(picCache[cur]||[]).find(x=>x.id===pid);if(!p)return;const d=document.createElement("div");d.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:30;display:flex;align-items:center;justify-content:center";d.onclick=()=>d.remove();d.innerHTML=`<img src="${p.d}" style="max-width:96vw;max-height:96vh">`;document.body.appendChild(d)}
+async function savePics(id,st=1){const o=P[st];for(const g of o.g)await deleteDoc(doc(fdb,"jobs",id,"photos",g));for(const p of o.p.filter(x=>!x.id))await setDoc(doc(collection(fdb,"jobs",id,"photos")),{d:p.d,t:new Date().toISOString(),s:st});o.g=[];delete picCache[id]}
+// ขั้นตอน 2 / 3
+const dz=()=>{dirty=true};
+function stepCard(j,n){const k=n===2?"foundL":"afterL",t=n===2?"ອັບເດດຫຼັງແກະເຄື່ອງ":"ສະພາບຫຼັງສ້ອມສຳເລັດ",d=j["step"+n]||{items:[],note:""};
+  return`<div class="card"><b>ຂັ້ນຕອນ ${n}: ${t}</b> <small style="color:var(--mu)">${d.t?"(ບັນທຶກ "+fd(d.t)+" "+ft(d.t)+")":"(ບໍ່ບັງຄັບ)"}</small>
+${pl(k,"ຕິກລາຍການ")}${chips("g_s"+n,S[k],d.items||[],true)}
+<label>ໝາຍເຫດ (ລູກຄ້າເຫັນຂໍ້ຄວາມນີ້ໃນໜ້າສະຖານະ)</label><textarea id="sn${n}">${esc(d.note||"")}</textarea>
+<label>ຮູບ</label><div class="row"><button type="button" class="btn g" onclick="document.getElementById('cam${n}').click()">📷 ຖ່າຍຮູບ</button><button type="button" class="btn g" onclick="document.getElementById('gal${n}').click()">🖼 ເລືອກຮູບ</button></div>
+<input type="file" id="cam${n}" accept="image/*" capture="environment" style="display:none" onchange="addPics(this.files,${n});this.value=''"><input type="file" id="gal${n}" accept="image/*" multiple style="display:none" onchange="addPics(this.files,${n});this.value=''">
+<div class="chips" id="pics${n}" style="gap:8px;margin-top:8px"></div>
+<button class="btn" style="margin-top:10px" onclick="saveStep('${j.id}',${n})">ບັນທຶກຂັ້ນຕອນ ${n}</button></div>`}
+async function saveStep(id,n){const j=jobs.find(x=>x.id===id);if(!j)return;
+  const st={items:getSel("g_s"+n),note:$("#sn"+n).value.trim(),t:new Date().toISOString()};
+  if(await save(async()=>{await updateDoc(J(id),{["step"+n]:st,log:[...(j.log||[]),{t:st.t,f:["ຂັ້ນຕອນ "+n]}]});await savePics(id,n)})){await syncQ({...j,["step"+n]:st});dirty=false;toast("ບັນທຶກຂັ້ນຕອນ "+n+" ແລ້ວ");if(view==="det"&&cur===id)draw()}}
 // เพิ่มรายการในหน้ารับเครื่อง
-const QA={brands:["sel","f_brand"],staff:["sel","f_by"],issues:["chip","g_issues"],conds:["chip","g_conds"]};
+const QA={foundL:["chip","g_s2"],afterL:["chip","g_s3"],brands:["sel","f_brand"],staff:["sel","f_by"],issues:["chip","g_issues"],conds:["chip","g_conds"]};
 function qt(k){const r=$("#qr_"+k);r.style.display=r.style.display==="none"?"flex":"none";if(r.style.display==="flex")$("#qa_"+k).focus()}
 async function qa(k){
   const i=$("#qa_"+k),v=i.value.trim();if(!v)return;
@@ -205,18 +232,22 @@ function vDet(){
   $("#m").innerHTML=`<div class="row" style="margin-bottom:10px"><button class="btn g" onclick="go('jobs')">← ກັບ</button><button class="btn g" onclick="go('form','${j.id}')">ແກ້ໄຂ</button><button class="btn r" onclick="delJob('${j.id}')">ລົບ</button></div>
 <div class="card hd"><div class="row"><div style="flex:3"><div class="big1">${esc(j.code)}</div><div class="cn">${esc(j.cname)}</div><div>📞 ${esc(j.phone)}</div>${j.tech?`<div>🔧 ຊ່າງ: <b>${esc(j.tech)}</b></div>`:""}</div><div style="flex:none">${bd(j.status)}</div></div></div>
 <div class="card"><div class="two">${L("ຍີ່ຫໍ້ / ລຸ້ນ / ສີ",[j.brand,j.model,j.color].filter(Boolean).join(" "))}${j.lock||(j.pattern&&j.pattern.length)?`<div><label>ລະຫັດປົດລັອກ</label>${esc(j.lock||"")}${j.pattern&&j.pattern.length?`<div>${patSvg(j.pattern,110,true)}</div>`:""}</div>`:""}${L("ອາການ / ບໍລິການ",is)}${L("ສະພາບເຄື່ອງ",cs)}${L("ວັນທີ / ເວລາຮັບ",fd(j.date)+" "+ft(j.date))}${L("ຜູ້ຮັບເຄື່ອງ",j.by)}${L("ທີ່ຢູ່",j.addr)}${L("ໝາຍເຫດລູກຄ້າ",j.cnote)}${L("ໝາຍເຫດ",j.note)}${L("IMEI",j.imei)}</div></div>
-<div class="card" id="phc" style="display:none"><b>ຮູບສະພາບເຄື່ອງ</b><div class="chips" id="phl" style="gap:8px;margin-top:6px"></div></div>
+<div class="card" id="phc" style="display:none"><b>ຮູບກ່ອນຮັບ (ຂັ້ນຕອນ 1)</b><div class="chips" id="phl" style="gap:8px;margin-top:6px"></div></div>
 <div class="card"><b>ປ່ຽນສະຖານະ</b><div class="row"><select id="ns">${S.statuses.map(s=>`<option ${s.n===j.status?"selected":""}>${esc(s.n)}</option>`).join("")}</select><button class="btn" onclick="chSt('${j.id}')">ອັບເດດ</button></div>
 <label>ຊ່າງຜູ້ເຮັດ</label><div class="row"><select id="tc">${opts(S.staff,j.tech||"","— ບໍ່ມີ —")}</select><button class="btn g" onclick="chTech('${j.id}')">ມອບໝາຍ</button></div>
 <div style="margin-top:8px;color:#667085;font-size:13px">${[...(j.hist||[]).map(h=>[h.t,"ສະຖານະ → "+tn(h.s)]),...(j.log||[]).map(l=>[l.t,"ແກ້ໄຂ: "+l.f.join(", ")])].sort((a,b)=>b[0].localeCompare(a[0])).map(h=>`${fd(h[0])} ${ft(h[0])} — ${esc(h[1])}`).join("<br>")}</div></div>
+<div id="stp" oninput="dz()" onclick="dz()">${stepCard(j,2)}${stepCard(j,3)}</div>
 <div class="card"><b>ສົ່ງສະຖານະໃຫ້ລູກຄ້າ</b><div class="row" style="margin-top:8px"><button class="btn g" onclick="sendLink('${j.id}','copy')">ສຳເນົາຂໍ້ຄວາມ + ລິ້ງ</button><button class="btn" style="background:#128c4a" onclick="sendLink('${j.id}','wa')">ສົ່ງທາງ WhatsApp</button></div></div>
 <div class="card"><b>ພິມເອກະສານ</b><div class="row" style="margin-top:8px"><button class="btn g" onclick="pr('stk','${j.id}')">1. ສະຕິກເກີ (30x40)</button><button class="btn g" onclick="pr('rec','${j.id}')">2. ໃບຮັບເຄື່ອງ</button><button class="btn g" onclick="pr('acc','${j.id}')">3. ຂໍ້ມູນລູກຄ້າ / ລະຫັດອີເມວ</button></div></div>
 <div class="card"><b>ຂໍ້ມູນລູກຄ້າ / ລະຫັດອີເມວ (ສຳລັບໃບທີ 3)</b><label>ອີເມວ</label><div class="inl"><input id="a_u" value="${esc(un)}" placeholder="ຊື່ອີເມວ"><select id="a_d">${DOM.map(d=>`<option ${d===dsel?"selected":""}>${d}</option>`).join("")}<option value="" ${dsel===""?"selected":""}>(ພິມເອງທັງໝົດ)</option></select></div>
 <label>ລະຫັດຜ່ານ (ບໍ່ບັນທຶກລົງລະບົບ ໃຊ້ສຳລັບພິມເທົ່ານັ້ນ)</label><input id="a_p" autocomplete="off">
-<div class="row" style="margin-top:8px"><button class="btn g" onclick="saveAcct('${j.id}')">ບັນທຶກອີເມວ</button><button class="btn" onclick="pr('acc','${j.id}')">ພິມໃບຂໍ້ມູນ</button></div></div>`;showPics(j.id);
+<div class="row" style="margin-top:8px"><button class="btn g" onclick="saveAcct('${j.id}')">ບັນທຶກອີເມວ</button><button class="btn" onclick="pr('acc','${j.id}')">ພິມໃບຂໍ້ມູນ</button></div></div>`;P[2]={p:[],g:[]};P[3]={p:[],g:[]};showPics(j.id);
 }
 const em=()=>{const u=$("#a_u").value.trim(),d=$("#a_d").value;return!u?"":u.includes("@")?u:u+d};
-async function pr(k,id){const j=jobs.find(x=>x.id===id),x={done:doneDate(j)};if(k==="acc"){x.pw=$("#a_p")?.value||"";x.email=em()}else{const t=await syncQ(j);if(t)x.url=new URL("status.html?t="+t,location.href).href}printDoc(k,j,S,toast,x)}
+async function pr(k,id){const j=jobs.find(x=>x.id===id),x={done:doneDate(j)};
+  if(isIOS){x.win=window.open("","_blank");if(x.win)x.win.document.write("<p style='font:16px sans-serif;padding:20px'>ກຳລັງກຽມເອກະສານ…</p>")}
+  if(k==="acc"){x.pw=$("#a_p")?.value||"";x.email=em()}else{const t=await syncQ(j);if(t)x.url=new URL("status.html?t="+t,location.href).href}
+  printDoc(k,j,S,toast,x)}
 async function sendLink(id,mode){
   const j=jobs.find(x=>x.id===id),t=await syncQ(j);if(!t)return;
   const url=new URL("status.html?t="+t,location.href).href,msg=`ສະບາຍດີ ${j.cname}\nກວດສະຖານະເຄື່ອງຂອງທ່ານ (${j.code}) ໄດ້ທີ່ນີ້:\n${url}\n— ${S.name}`;
@@ -227,12 +258,53 @@ async function chSt(id){const j=jobs.find(x=>x.id===id),s=$("#ns").value;if(s===
 async function saveAcct(id){if(await save(()=>updateDoc(J(id),{acct:[{u:em(),d:new Date().toISOString()}]})))toast("ບັນທຶກແລ້ວ")}
 async function delJob(id){const j=jobs.find(x=>x.id===id);if(confirm("ລົບງານນີ້ຖາວອນ?")&&await save(async()=>{try{const ps=await getDocs(collection(fdb,"jobs",id,"photos"));for(const d of ps.docs)await deleteDoc(d.ref)}catch(e){}await deleteDoc(J(id));if(j&&j.pub)await deleteDoc(doc(fdb,"public",j.pub))}))go("jobs")}
 
-// ---- ตั้งค่า ----
+// ---- ດາວໂຫຼດ Excel ----
+function vXls(){
+  const d=new Date(),mo=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+  $("#m").innerHTML=`<h2>ດາວໂຫຼດຂໍ້ມູນເປັນ Excel</h2><div class="card"><label>ເລືອກເດືອນ</label><input type="month" id="x_m" value="${mo}" oninput="xCnt()">
+<p style="color:var(--mu);font-size:13px">ເລືອກແຕ່ເດືອນກໍພໍ — ລະບົບຈະລວມຕັ້ງແຕ່ວັນທີ 1 ຮອດວັນສຸດທ້າຍຂອງເດືອນ (ນັບຕາມວັນທີຮັບເຄື່ອງ)</p>
+<details><summary style="cursor:pointer;color:var(--pr2)">ຢາກເລືອກວັນທີເອງ (ບໍ່ບັງຄັບ)</summary><div class="two"><div><label>ຈາກວັນທີ</label><input type="date" id="x_f" oninput="xCnt()"></div><div><label>ຮອດວັນທີ</label><input type="date" id="x_t" oninput="xCnt()"></div></div></details>
+<div id="x_n" style="margin:14px 0 10px;font-weight:700"></div><button class="btn big" onclick="xDl()">📥 ດາວໂຫຼດ Excel</button>
+<small style="color:var(--mu)">ໄຟລ໌ມີ 3 ແຜ່ນ: ງານທັງໝົດ, ສະຫຼຸບ, ປະຫວັດສະຖານະ. ມີລະຫັດປົດລັອກເຄື່ອງລູກຄ້າ ເກັບໄວ້ບ່ອນປອດໄພ</small></div>`;xCnt();
+}
+function xRange(){
+  const m=$("#x_m").value,f=$("#x_f").value,t=$("#x_t").value;
+  const som=d=>new Date(d.getFullYear(),d.getMonth(),1),eom=d=>new Date(d.getFullYear(),d.getMonth()+1,0,23,59,59,999);
+  let a=f?new Date(f+"T00:00:00"):null,b=t?new Date(t+"T23:59:59.999"):null;
+  if(a||b){if(!a)a=som(b);if(!b)b=eom(a)}else if(m){a=new Date(+m.slice(0,4),+m.slice(5,7)-1,1);b=eom(a)}else return null;
+  return[a,b];
+}
+const xJobs=()=>{const r=xRange();return r?jobs.filter(j=>{const d=new Date(j.date);return d>=r[0]&&d<=r[1]}).sort((a,b)=>(a.date||"").localeCompare(b.date||"")):[]};
+const xCnt=()=>{const e=$("#x_n");if(e)e.textContent="ພົບ "+xJobs().length+" ງານ"};
+function xDl(){
+  if(typeof XLSX==="undefined"){toast("ໂຫຼດເຄື່ອງມື Excel ບໍ່ໄດ້ ກວດອິນເຕີເນັດ");return}
+  const L=xJobs(),r=xRange();if(!L.length){toast("ບໍ່ມີຂໍ້ມູນໃນຊ່ວງນີ້");return}
+  const dt=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("en-GB")},tm=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
+  const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const ls=(a,x)=>(a&&a.length?a:[x]).filter(Boolean);
+  const H=["ລະຫັດງານ","ວັນທີຮັບ","ເວລາຮັບ","ຊື່ລູກຄ້າ","ເບີໂທ","ທີ່ຢູ່","ຍີ່ຫໍ້","ລຸ້ນ","ສີ","ລະຫັດປົດລັອກ","ລວດລາຍປົດລັອກ","ອາການ / ບໍລິການ","ສະພາບເຄື່ອງ","ຜູ້ຮັບເຄື່ອງ","ຊ່າງ","ສະຖານະ","ວັນທີສຳເລັດ","ອີເມວລູກຄ້າ","ໝາຍເຫດລູກຄ້າ","ໝາຍເຫດ","ຜົນກວດຫຼັງແກະເຄື່ອງ","ສະພາບຫຼັງສ້ອມສຳເລັດ"];
+  const W=[12,12,8,20,14,22,12,16,10,14,14,28,26,14,14,22,12,26,22,22,32,32];
+  const row=j=>{const dn=doneDate(j);return[j.code,dt(j.date),tm(j.date),j.cname,j.phone,j.addr,j.brand,j.model,j.color,j.lock,(j.pattern||[]).join("-"),ls(j.issues,j.issue).join(", "),ls(j.conds,j.cond).join(", "),j.by,j.tech,j.status,dn?dt(dn):"",(j.acct&&j.acct[0]&&j.acct[0].u)||"",j.cnote,j.note,[...(j.step2?.items||[]),j.step2?.note||""].filter(Boolean).join(", "),[...(j.step3?.items||[]),j.step3?.note||""].filter(Boolean).join(", ")].map(x=>x??"")};
+  const cn=a=>{const m={};a.forEach(k=>{k=k||"—";m[k]=(m[k]||0)+1});return Object.entries(m).sort((a,b)=>b[1]-a[1])};
+  const sec=(t,a)=>[[],[t],...a.map(x=>[x[0],x[1]])];
+  const sum=[["ສະຫຼຸບຂໍ້ມູນ SL-Mobile"],["ຊ່ວງວັນທີ",dt(r[0])+" ຮອດ "+dt(r[1])],["ຈຳນວນງານທັງໝົດ",L.length],
+    ...sec("ແຍກຕາມສະຖານະ",cn(L.map(j=>j.status))),...sec("ແຍກຕາມຊ່າງ",cn(L.map(j=>j.tech||"ບໍ່ໄດ້ມອບໝາຍ"))),
+    ...sec("ແຍກຕາມອາການ / ບໍລິການ",cn(L.flatMap(j=>ls(j.issues,j.issue)))),...sec("ແຍກຕາມຍີ່ຫໍ້",cn(L.map(j=>j.brand)))];
+  const hist=[["ລະຫັດງານ","ຊື່ລູກຄ້າ","ວັນທີ","ເວລາ","ສະຖານະ"],...L.flatMap(j=>(j.hist||[]).map(h=>[j.code,j.cname,dt(h.t),tm(h.t),tn(h.s)]))];
+  const wb=XLSX.utils.book_new(),w1=XLSX.utils.aoa_to_sheet([H,...L.map(row)]),w2=XLSX.utils.aoa_to_sheet(sum),w3=XLSX.utils.aoa_to_sheet(hist);
+  w1["!cols"]=W.map(x=>({wch:x}));w1["!autofilter"]={ref:"A1:"+XLSX.utils.encode_col(H.length-1)+(L.length+1)};
+  w2["!cols"]=[{wch:30},{wch:22}];w3["!cols"]=[{wch:12},{wch:20},{wch:12},{wch:8},{wch:24}];
+  XLSX.utils.book_append_sheet(wb,w1,"ງານທັງໝົດ");XLSX.utils.book_append_sheet(wb,w2,"ສະຫຼຸບ");XLSX.utils.book_append_sheet(wb,w3,"ປະຫວັດສະຖານະ");
+  const m=$("#x_m").value,custom=$("#x_f").value||$("#x_t").value;
+  XLSX.writeFile(wb,"sl-mobile_"+(custom||!m?ymd(r[0])+"_"+ymd(r[1]):m)+".xlsx");toast("ດາວໂຫຼດແລ້ວ "+L.length+" ງານ");
+}
+
+// ---- ຕັ້ງຄ່າ ----
 function lst(key,title,col){const lab=v=>typeof v==="string"?v:v.n;
   return`<div class="card"><b>${title}</b><div class="chips">${S[key].map((v,i)=>`<span class="chip x">${col?`<i style="background:${esc(v.c)}"></i>`:""}${esc(lab(v))} <b onclick="topL('${key}',${i})" style="color:#1d4aa3" title="ຍ້າຍຂຶ້ນເທິງສຸດ">⬆</b><b onclick="delL('${key}',${i})">×</b></span>`).join("")||'<span style="color:var(--mu)">ຍັງບໍ່ມີ</span>'}</div><div class="inl" style="margin-top:8px">${col?`<input type="color" id="n_${key}_c" value="#808080" style="max-width:60px;padding:2px">`:""}<input id="n_${key}" placeholder="ເພີ່ມລາຍການໃໝ່..." onkeydown="if(event.key==='Enter')addL('${key}')"><button class="btn" onclick="addL('${key}')">+ ເພີ່ມ</button></div></div>`}
 function vSet(){
-  $("#m").innerHTML=`<h2>ຕັ້ງຄ່າ</h2><div class="card"><b>ການໃຊ້ໂควตาฟรີ (ປະມານ)</b><div>ອ່ານຂໍ້ມູນວັນນີ້ໃນເຄື່ອງນີ້: <b>${readsToday().toLocaleString()}</b> / ${DAYLIM.toLocaleString()}</div><small style="color:var(--mu)">ນັບສະເພາະເຄື່ອງນີ້ ຕົວເລກຈິງເບິ່ງໄດ້ທີ່ Firebase Console → Firestore → Usage</small></div>${lst("brands","ຍີ່ຫໍ້ໂທລະສັບ")}${lst("issues","ອາການເສຍ / ບໍລິການ")}${lst("conds","ສະພາບເຄື່ອງກ່ອນຮັບ")}${lst("colors","ສີເຄື່ອງ",true)}${lst("staff","ພະນັກງານ (ຜູ້ຮັບເຄື່ອງ / ຊ່າງ)")}
-<div class="card"><b>ສະຖານະງານ</b>${S.statuses.map((s,i)=>`<div class="row" style="margin-top:6px"><input id="st_n${i}" value="${esc(s.n)}"><input id="st_c${i}" type="color" value="${s.c}" style="max-width:60px;flex:none;min-width:0"><button class="btn g" onclick="mvSt(${i},-1)">↑</button><button class="btn g" onclick="mvSt(${i},1)">↓</button><button class="btn r" onclick="delSt(${i})">ລົບ</button></div>`).join("")}<div class="row" style="margin-top:10px"><button class="btn g" onclick="addSt()">+ ເພີ່ມສະຖານະ</button><button class="btn" onclick="saveSt()">ບັນທຶກສະຖານະ</button></div></div>
+  $("#m").innerHTML=`<h2>ຕັ້ງຄ່າ</h2><div class="card"><b>ການໃຊ້ໂควตาฟรີ (ປະມານ)</b><div>ອ່ານຂໍ້ມູນວັນນີ້ໃນເຄື່ອງນີ້: <b>${readsToday().toLocaleString()}</b> / ${DAYLIM.toLocaleString()}</div><small style="color:var(--mu)">ນັບສະເພາະເຄື່ອງນີ້ ຕົວເລກຈິງເບິ່ງໄດ້ທີ່ Firebase Console → Firestore → Usage</small></div>${lst("brands","ຍີ່ຫໍ້ໂທລະສັບ")}${lst("issues","ອາການເສຍ / ບໍລິການ")}${lst("conds","ສະພາບເຄື່ອງກ່ອນຮັບ")}${lst("colors","ສີເຄື່ອງ",true)}${lst("foundL","ຜົນກວດຫຼັງແກະເຄື່ອງ (ຂັ້ນຕອນ 2)")}${lst("afterL","ສະພາບຫຼັງສ້ອມສຳເລັດ (ຂັ້ນຕອນ 3)")}${lst("staff","ພະນັກງານ (ຜູ້ຮັບເຄື່ອງ / ຊ່າງ)")}
+<div class="card"><b>ສະຖານະງານ</b>${S.statuses.map((s,i)=>`<div class="row" style="margin-top:6px"><input id="st_n${i}" value="${esc(s.n)}"><input id="st_c${i}" type="color" value="${s.c}" style="max-width:60px;flex:none;min-width:0"><label style="display:flex;align-items:center;gap:4px;margin:0;flex:none;min-width:0;color:var(--tx)"><input type="checkbox" id="st_d${i}" ${s.d?"checked":""} style="width:auto"> ລົງລຸ່ມ</label><button class="btn g" onclick="mvSt(${i},-1)">↑</button><button class="btn g" onclick="mvSt(${i},1)">↓</button><button class="btn r" onclick="delSt(${i})">ລົບ</button></div>`).join("")}<div class="row" style="margin-top:10px"><button class="btn g" onclick="addSt()">+ ເພີ່ມສະຖານະ</button><button class="btn" onclick="saveSt()">ບັນທຶກສະຖານະ</button></div></div>
 <div class="card"><b>ຂໍ້ມູນຮ້ານ</b><div class="two"><div><label>ຊື່ຮ້ານ</label><input id="s_name" value="${esc(S.name)}"></div><div><label>ເບີໂທ</label><input id="s_phone" value="${esc(S.phone)}"></div><div><label>Facebook</label><input id="s_fb" value="${esc(S.fb)}"></div><div><label>ອີເມວ</label><input id="s_email" value="${esc(S.email)}"></div></div><label>ທີ່ຢູ່</label><input id="s_addr" value="${esc(S.addr)}"><label>ໂລໂກ້ (ຊື່ໄຟລ໌ທີ່ອັບໂຫຼດໄວ້ໃນ GitHub ເຊັ່ນ logo.png)</label><input id="s_logo" value="${esc(S.logo)}"><div class="row" style="margin-top:10px"><button class="btn" onclick="saveShop()">ບັນທຶກ</button></div></div>
 <div class="card"><b>ບັນຊີເຂົ້າລະບົບ</b><label>ລະຫັດຜ່ານປັດຈຸບັນ</label><input id="c_old" type="password"><div class="two"><div><label>ລະຫັດຜ່ານໃໝ່ (6 ຕົວຂຶ້ນໄປ)</label><input id="c_np" type="password"></div><div><label>ອີເມວໃໝ່ (ລະບົບຈະສົ່ງລິ້ງຢືນຢັນ)</label><input id="c_ne" type="email"></div></div><div class="row" style="margin-top:8px"><button class="btn" onclick="chPw()">ປ່ຽນລະຫັດຜ່ານ</button><button class="btn" onclick="chEm()">ປ່ຽນອີເມວ</button></div></div>
 <div class="card"><b>ສຳຮອງ / ກູ້ຄືນຂໍ້ມູນ</b><div class="row" style="margin-top:8px"><button class="btn" onclick="backup()">ດາວໂຫຼດໄຟລ໌ສຳຮອງ (JSON)</button><input type="file" accept=".json" onchange="restore(this.files[0])"></div><p style="color:#667085;font-size:12px">ໄຟລ໌ສຳຮອງມີລະຫັດປົດລັອກເຄື່ອງລູກຄ້າ ເກັບໄວ້ບ່ອນປອດໄພ</p></div>`;
@@ -241,9 +313,9 @@ async function pushS(p){if(await save(()=>setDoc(SH,{...S,...p})))toast("ບັ�
 async function addL(k){const i=$("#n_"+k),v=i.value.trim();if(!v)return;let it=v;if(k==="colors"){if(S.colors.some(x=>x.n===v))return;it={n:v,c:$("#n_colors_c").value}}else if(S[k].includes(v))return;i.value="";await pushS({[k]:[...S[k],it]});setTimeout(()=>$("#n_"+k)?.focus(),60)}
 const delL=(k,i)=>{const x=S[k][i];if(confirm("ລົບ \""+(typeof x==="string"?x:x.n)+"\" ?"))pushS({[k]:S[k].filter((_,y)=>y!==i)})};
 const topL=(k,i)=>{const a=[...S[k]],[x]=a.splice(i,1);a.unshift(x);pushS({[k]:a})};
-const rd=()=>S.statuses.map((s,i)=>({n:$("#st_n"+i)?.value.trim()||s.n,c:$("#st_c"+i)?.value||s.c}));
+const rd=()=>S.statuses.map((s,i)=>({n:$("#st_n"+i)?.value.trim()||s.n,c:$("#st_c"+i)?.value||s.c,d:$("#st_d"+i)?$("#st_d"+i).checked:!!s.d}));
 async function saveShop(){const o={};["name","phone","fb","email","addr","logo"].forEach(k=>o[k]=$("#s_"+k).value.trim());pushS(o)}
-const saveSt=()=>pushS({statuses:rd()}),addSt=()=>pushS({statuses:[...rd(),{n:"ສະຖານະໃໝ່",c:"#7a8394"}]});
+const saveSt=()=>pushS({statuses:rd()}),addSt=()=>pushS({statuses:[...rd(),{n:"ສະຖານະໃໝ່",c:"#7a8394",d:false}]});
 const delSt=i=>{if(confirm("ລົບສະຖານະນີ້?")){const a=rd();a.splice(i,1);pushS({statuses:a})}};
 const mvSt=(i,d)=>{const a=rd(),k=i+d;if(k<0||k>=a.length)return;[a[i],a[k]]=[a[k],a[i]];pushS({statuses:a})};
 async function reauth(){const u=auth.currentUser,p=$("#c_old").value;if(!p){toast("ໃສ່ລະຫັດຜ່ານປັດຈຸບັນ");return null}try{await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,p));return u}catch(e){toast("ລະຫັດຜ່ານປັດຈຸບັນບໍ່ຖືກຕ້ອງ");return null}}
@@ -251,4 +323,4 @@ async function chPw(){const n=$("#c_np").value;if(n.length<6){toast("ລະຫ�
 async function chEm(){const n=$("#c_ne").value.trim();if(!n){toast("ໃສ່ອີເມວໃໝ່");return}const u=await reauth();if(u&&await save(()=>verifyBeforeUpdateEmail(u,n)))toast("ສົ່ງລິ້ງຢືນຢັນໄປອີເມວໃໝ່ແລ້ວ")}
 function backup(){const b=new Blob([JSON.stringify({settings:S,jobs},null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sl-mobile-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
 async function restore(f){if(!f||!confirm("ການກູ້ຄືນຈະຂຽນທັບງານທີ່ມີລະຫັດດຽວກັນ ດຳເນີນການຕໍ່?"))return;try{const d=JSON.parse(await f.text());for(const j of d.jobs||[]){const{id,...r}=j;await setDoc(J(id),r)}if(d.settings)await setDoc(SH,d.settings);toast("ກູ້ຄືນແລ້ວ "+(d.jobs||[]).length+" ງານ")}catch(e){toast("ກູ້ຄືນບໍ່ສຳເລັດ: "+(e.code||e.message))}}
-Object.assign(window,{qt,qa,qac,addPics,rmPic,viewPic,padClear,askTech,setTech,mtAdd,chTech,closeMd,topL,sendLink,go,logout,stat,setq,setfs,fill,tg,saveJob,pr,chSt,saveAcct,delJob,addL,delL,saveShop,saveSt,addSt,delSt,mvSt,chPw,chEm,backup,restore});
+Object.assign(window,{dz,saveStep,setso,dtg,dall,xCnt,xDl,qt,qa,qac,addPics,rmPic,viewPic,padClear,askTech,setTech,mtAdd,chTech,closeMd,topL,sendLink,go,logout,stat,setq,setfs,fill,tg,saveJob,pr,chSt,saveAcct,delJob,addL,delL,saveShop,saveSt,addSt,delSt,mvSt,chPw,chEm,backup,restore});

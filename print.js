@@ -13,14 +13,16 @@ export const patSvg=(seq,px,nums)=>`<svg viewBox="0 0 100 100" width="${px}" hei
 const logo=(S,h)=>S.logo?`<img src="${esc(new URL(S.logo,location.href).href)}" style="height:${h}mm;max-width:100%;display:block">`:"";
 const ln="white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
 const list=(a,s)=>(a&&a.length?a:[s]).filter(Boolean);
-function run(body,page,margin){
+export const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function run(body,page,margin,win,z=1){
+  const ph=new URL("PhetsarathOT.ttf",location.href).href;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SL-Mobile</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet"><style>@font-face{font-family:'Phetsarath OT';src:local('Phetsarath OT'),local('PhetsarathOT'),url('${ph}') format('truetype')}@page{size:${page};margin:${margin}}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}html,body{margin:0;padding:0}body{font-family:'Phetsarath OT','Noto Sans Lao',sans-serif;color:#000}svg{width:100%;height:100%;display:block}.pg{break-after:page;overflow:hidden;word-break:break-word}.pg:last-child{break-after:auto}hr{border:0;border-top:1px solid #000;margin:2mm 0}.bar{display:none}@media screen{body{background:#e9edf3}.bar{display:flex;gap:10px;align-items:center;padding:10px;background:#12306b;color:#fff;font:14px sans-serif;position:sticky;top:0;z-index:2}.bar button{padding:10px 18px;font-size:16px;border:0;border-radius:8px;background:#fff}.pg{zoom:${z};background:#fff;margin:12px auto}}</style></head><body><div class="bar"><button onclick="window.print()">🖨 ພິມ</button><span>ຂະໜາດກະດາດ: ${page}</span></div>${body}</body></html>`;
+  if(win){const d=win.document;d.open();d.write(html);d.close();setTimeout(()=>{try{win.focus();win.print()}catch(e){}},900);return}
   const f=document.createElement("iframe");
   f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0";
   document.body.appendChild(f);
-  const w=f.contentWindow,d=w.document,ph=new URL("PhetsarathOT.ttf",location.href).href;
-  d.open();
-  d.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet"><style>@font-face{font-family:'Phetsarath OT';src:local('Phetsarath OT'),local('PhetsarathOT'),url('${ph}') format('truetype')}@page{size:${page};margin:${margin}}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}html,body{margin:0;padding:0}body{font-family:'Phetsarath OT','Noto Sans Lao',sans-serif;color:#000}svg{width:100%;height:100%;display:block}.pg{break-after:page;overflow:hidden;word-break:break-word}.pg:last-child{break-after:auto}hr{border:0;border-top:1px solid #000;margin:2mm 0}</style></head><body>${body}</body></html>`);
-  d.close();
+  const w=f.contentWindow,d=w.document;
+  d.open();d.write(html);d.close();
   setTimeout(()=>{(d.fonts?d.fonts.ready:Promise.resolve()).then(()=>{try{w.focus();w.print()}catch(e){alert("ພິມບໍ່ໄດ້: "+e.message)}setTimeout(()=>f.remove(),60000)})},1000);
 }
 export function printDoc(kind,j,S,warn,x={}){
@@ -33,7 +35,7 @@ ${ls("ເບີ:",esc(j.phone))}${ls("ລຸ້ນ / ສີ:",esc([j.brand,j.mod
 <hr style="margin:.8mm 0"><div style="text-align:center;font-size:6.5px">ອາການ</div>
 <div style="flex:1;min-height:0;overflow:hidden;font-size:8.5px;font-weight:700;line-height:1.3;padding-top:.4mm">${esc(sv)}</div>
 <div style="text-align:center;font-size:8px;font-weight:700;${ln}"><span style="font-size:6px;font-weight:400">ເບີຮ້ານ </span>${esc(S.phone)}</div>
-<div style="text-align:center;font-size:6px">${fd(j.date)} ${ft(j.date)}</div></div>`,"30mm 40mm","0");
+<div style="text-align:center;font-size:6px">${fd(j.date)} ${ft(j.date)}</div></div>`,"30mm 40mm","0",x.win,4);
   }else if(kind==="rec"){
     const dv=[dev,list(j.issues,j.issue).join(", ")].filter(Boolean).join(" · ");
     const f=(a,b,w)=>`<div style="${w};display:flex;gap:1mm;align-items:baseline;min-width:0"><span style="flex:none">${a}</span><span style="flex:1;min-width:0;border-bottom:.25mm dotted #444;font-weight:700;${ln}">${b}</span></div>`;
@@ -43,7 +45,7 @@ ${ls("ເບີ:",esc(j.phone))}${ls("ລຸ້ນ / ສີ:",esc([j.brand,j.mod
 ${dv?`<div style="margin-top:1mm;font-size:7px;${ln}">ເຄື່ອງ / ບໍລິການ: <b>${esc(dv)}</b></div>`:""}
 <div style="display:flex;gap:2mm;margin-top:1.2mm;flex:1;min-height:0"><div style="flex:1;font-size:6.8px;line-height:1.35"><b><u>❖ ໝາຍເຫດ:</u></b><br>▪ ກະລຸນາຮັກສາໃບຝາກເຄື່ອງຂອງທ່ານໃຫ້ດີ ເວລາຮັບເຄື່ອງໃຫ້ເອົາໃບຝາກເຄື່ອງມາພ້ອມ<br>▪ ການຮັບປະກັນເຄື່ອງສ້ອມ ແມ່ນຈະເລີ່ມນັບຕັ້ງແຕ່ມື້ທີ່ທາງຮ້ານເຮົາໄດ້ແຈ້ງໃຫ້ມາຮັບເອົາເຄື່ອງ, ຖ້າຫາກວ່າພາຍໃນ 1-3 ເດືອນ ລູກຄ້າຍັງບໍ່ມາຮັບເອົາເຄື່ອງ ທາງຮ້ານຈະບໍ່ສາມາດຮັບປະກັນເຄື່ອງຂອງລູກຄ້າໄດ້</div><div style="width:16mm;flex:none;text-align:center;font-size:5.5px;line-height:1.2"><div style="width:14mm;height:14mm;margin:0 auto">${qr(x.url||j.code)}</div>ສະແກນກວດສະຖານະ</div></div>
 <div style="font-size:7.5px"><u>ເບີໂທຕິດຕໍ່: ${esc(S.phone)}</u> &nbsp; <u>Facebook: ${esc(S.fb)}</u></div>
-<div style="text-align:center;font-weight:700;font-size:7.5px;margin-top:.8mm">(ຂໍຂອບໃຈທຸກທ່ານທີ່ມາອຸດໜູນຮ້ານ ${esc(S.name)})</div></div>`,"A4 portrait","5mm");
+<div style="text-align:center;font-weight:700;font-size:7.5px;margin-top:.8mm">(ຂໍຂອບໃຈທຸກທ່ານທີ່ມາອຸດໜູນຮ້ານ ${esc(S.name)})</div></div>`,"A4 portrait","5mm",x.win,3);
   }else if(kind==="acc"){
     const r=(a,b)=>`<div style="display:flex;gap:4mm;padding:2.2mm 0;border-bottom:1px solid #c9d3e6"><span style="width:48mm;flex:none;color:#1d4aa3;font-weight:700">${a}</span><span style="flex:1;font-weight:700;min-height:6mm">${b||"&nbsp;"}</span></div>`;
     const dots="................................................";
@@ -51,6 +53,6 @@ ${dv?`<div style="margin-top:1mm;font-size:7px;${ln}">ເຄື່ອງ / ບ�
     run(`<div class="pg" style="width:186mm;font-size:15px;line-height:1.5"><div style="background:#1d4aa3;color:#fff;padding:5mm 6mm;border-radius:3mm;display:flex;align-items:center;gap:5mm">${S.logo?`<div style="background:#fff;border-radius:2mm;padding:1mm">${logo(S,12)}</div>`:""}<div style="flex:1"><div style="font-size:22px;font-weight:700">${esc(S.name)}</div><div style="font-size:15px">ຂໍ້ມູນລູກຄ້າ / ລະຫັດອີເມວ</div></div><div style="font-size:24px;font-weight:700">${esc(j.code)}</div></div>
 <div style="margin-top:4mm">${r("ວັນທີຮັບເຄື່ອງ",fd(j.date)+" "+ft(j.date))}${r("ວັນທີສຳເລັດ",x.done?fd(x.done)+" "+ft(x.done):dots)}${r("ຊື່ລູກຄ້າ",esc(j.cname))}${r("ເບີໂທ",esc(j.phone))}${r("ເຄື່ອງ",esc(dev))}${r("ລະຫັດໜ້າຈໍ",esc(j.lock||"")+(j.pattern&&j.pattern.length?` <span style="display:inline-block;vertical-align:middle;margin-left:3mm">${patSvg(j.pattern,"26mm",true)}</span>`:""))}${r("ອີເມວ",esc(x.email))}${r("ລະຫັດຜ່ານ",x.pw?esc(x.pw):dots)}</div>
 <div style="margin-top:5mm;border:1.5px solid #e0781f;border-radius:3mm;overflow:hidden"><div style="background:#e0781f;color:#fff;font-weight:700;padding:1.5mm 4mm">ການບໍລິການ</div><div style="padding:3mm 4mm;font-weight:700;font-size:16px;line-height:1.7">${svc.map(s=>"▪ "+esc(s)).join("<br>")||"&nbsp;"}${note?`<div style="font-weight:400;font-size:13px;margin-top:2mm;color:#444">ໝາຍເຫດ: ${esc(note)}</div>`:""}</div></div>
-<div style="margin-top:14mm;display:flex;justify-content:space-between;font-size:14px"><span>ລາຍເຊັນລູກຄ້າ ____________________</span><span>ລາຍເຊັນຮ້ານ ____________________</span></div></div>`,"A4","12mm");
+<div style="margin-top:14mm;display:flex;justify-content:space-between;font-size:14px"><span>ລາຍເຊັນລູກຄ້າ ____________________</span><span>ລາຍເຊັນຮ້ານ ____________________</span></div></div>`,"A4","12mm",x.win,1);
   }
 }
