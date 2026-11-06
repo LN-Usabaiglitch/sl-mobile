@@ -1,6 +1,15 @@
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fd=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("en-GB")},ft=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
 function qr(t){try{const x=qrcode(0,"L");x.addData(t);x.make();return x.createSvgTag({cellSize:2,margin:0,scalable:true})}catch(e){return""}}
+const PC=[17,50,83];
+export function patInner(seq,nums){
+  const pt=i=>[PC[(i-1)%3],PC[Math.floor((i-1)/3)]];let h="";
+  if(seq.length>1)h+=`<polyline points="${seq.map(i=>pt(i).join(",")).join(" ")}" fill="none" stroke="#1d4aa3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>`;
+  for(let i=1;i<=9;i++){const[x,y]=pt(i),k=seq.indexOf(i);
+    h+=`<circle cx="${x}" cy="${y}" r="${k===0?9:k>0?7:5}" fill="${k===0?"#1f9d6b":k>0?"#1d4aa3":"#9aa3b2"}"/>`;
+    if(nums&&k>=0)h+=`<text x="${x}" y="${y+3.2}" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">${k+1}</text>`}
+  return h}
+export const patSvg=(seq,px,nums)=>`<svg viewBox="0 0 100 100" width="${px}" height="${px}" xmlns="http://www.w3.org/2000/svg">${patInner(seq,nums)}</svg>`;
 const logo=(S,h)=>S.logo?`<img src="${esc(new URL(S.logo,location.href).href)}" style="height:${h}mm;max-width:100%;display:block">`:"";
 const ln="white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
 const list=(a,s)=>(a&&a.length?a:[s]).filter(Boolean);
@@ -20,7 +29,7 @@ export function printDoc(kind,j,S,warn,x={}){
     const sv=list(j.issues,j.issue).join(", "),ls=(a,b)=>`<div style="display:flex;gap:.8mm;font-size:7px;line-height:1.35;min-width:0"><span style="flex:none">${a}</span><span style="flex:1;min-width:0;font-weight:700;${ln}">${b}</span></div>`;
     run(`<div class="pg" style="width:30mm;height:40mm;padding:1.4mm 1.6mm;display:flex;flex-direction:column;line-height:1.3">
 <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1mm"><span style="font-size:9px;font-weight:700;min-width:0;${ln}">${esc(j.cname)}</span><span style="font-size:8px;font-weight:700;flex:none">${esc(j.code)}</span></div>
-${ls("ເບີ:",esc(j.phone))}${ls("ລຸ້ນ / ສີ:",esc([j.brand,j.model,j.color].filter(Boolean).join(" ")))}${ls("ລະຫັດ:",esc(j.lock))}
+${ls("ເບີ:",esc(j.phone))}${ls("ລຸ້ນ / ສີ:",esc([j.brand,j.model,j.color].filter(Boolean).join(" ")))}${(j.pattern&&j.pattern.length)?`<div style="display:flex;gap:1mm;align-items:center;font-size:7px;line-height:1.3"><div style="flex:1;min-width:0"><span>ລະຫັດ:</span> <b>${esc(j.lock||"")}</b></div><div style="width:9mm;height:9mm;flex:none">${patSvg(j.pattern,"100%",false)}</div></div>`:ls("ລະຫັດ:",esc(j.lock))}
 <hr style="margin:.8mm 0"><div style="text-align:center;font-size:6.5px">ອາການ</div>
 <div style="flex:1;min-height:0;overflow:hidden;font-size:8.5px;font-weight:700;line-height:1.3;padding-top:.4mm">${esc(sv)}</div>
 <div style="text-align:center;font-size:8px;font-weight:700;${ln}"><span style="font-size:6px;font-weight:400">ເບີຮ້ານ </span>${esc(S.phone)}</div>
@@ -40,7 +49,7 @@ ${dv?`<div style="margin-top:1mm;font-size:7px;${ln}">ເຄື່ອງ / ບ�
     const dots="................................................";
     const svc=list(j.issues,j.issue),note=[j.cnote,j.note].filter(Boolean).join(" / ");
     run(`<div class="pg" style="width:186mm;font-size:15px;line-height:1.5"><div style="background:#1d4aa3;color:#fff;padding:5mm 6mm;border-radius:3mm;display:flex;align-items:center;gap:5mm">${S.logo?`<div style="background:#fff;border-radius:2mm;padding:1mm">${logo(S,12)}</div>`:""}<div style="flex:1"><div style="font-size:22px;font-weight:700">${esc(S.name)}</div><div style="font-size:15px">ຂໍ້ມູນລູກຄ້າ / ລະຫັດອີເມວ</div></div><div style="font-size:24px;font-weight:700">${esc(j.code)}</div></div>
-<div style="margin-top:4mm">${r("ວັນທີຮັບເຄື່ອງ",fd(j.date)+" "+ft(j.date))}${r("ວັນທີສຳເລັດ",x.done?fd(x.done)+" "+ft(x.done):dots)}${r("ຊື່ລູກຄ້າ",esc(j.cname))}${r("ເບີໂທ",esc(j.phone))}${r("ເຄື່ອງ",esc(dev))}${r("ລະຫັດໜ້າຈໍ",esc(j.lock))}${r("ອີເມວ",esc(x.email))}${r("ລະຫັດຜ່ານ",x.pw?esc(x.pw):dots)}</div>
+<div style="margin-top:4mm">${r("ວັນທີຮັບເຄື່ອງ",fd(j.date)+" "+ft(j.date))}${r("ວັນທີສຳເລັດ",x.done?fd(x.done)+" "+ft(x.done):dots)}${r("ຊື່ລູກຄ້າ",esc(j.cname))}${r("ເບີໂທ",esc(j.phone))}${r("ເຄື່ອງ",esc(dev))}${r("ລະຫັດໜ້າຈໍ",esc(j.lock||"")+(j.pattern&&j.pattern.length?` <span style="display:inline-block;vertical-align:middle;margin-left:3mm">${patSvg(j.pattern,"26mm",true)}</span>`:""))}${r("ອີເມວ",esc(x.email))}${r("ລະຫັດຜ່ານ",x.pw?esc(x.pw):dots)}</div>
 <div style="margin-top:5mm;border:1.5px solid #e0781f;border-radius:3mm;overflow:hidden"><div style="background:#e0781f;color:#fff;font-weight:700;padding:1.5mm 4mm">ການບໍລິການ</div><div style="padding:3mm 4mm;font-weight:700;font-size:16px;line-height:1.7">${svc.map(s=>"▪ "+esc(s)).join("<br>")||"&nbsp;"}${note?`<div style="font-weight:400;font-size:13px;margin-top:2mm;color:#444">ໝາຍເຫດ: ${esc(note)}</div>`:""}</div></div>
 <div style="margin-top:14mm;display:flex;justify-content:space-between;font-size:14px"><span>ລາຍເຊັນລູກຄ້າ ____________________</span><span>ລາຍເຊັນຮ້ານ ____________________</span></div></div>`,"A4","12mm");
   }
