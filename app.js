@@ -1,8 +1,8 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,updatePassword,reauthenticateWithCredential,EmailAuthProvider,verifyBeforeUpdateEmail} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,updateDoc,deleteDoc,runTransaction,getDocs} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {firebaseConfig} from "./firebase-config.js?v=20261106c";
-import {printDoc,patInner,patSvg,isIOS} from "./print.js?v=20261106c";
+import {firebaseConfig} from "./firebase-config.js?v=20261106d";
+import {printDoc,patInner,patSvg,isIOS} from "./print.js?v=20261106d";
 
 const fapp=initializeApp(firebaseConfig),auth=getAuth(fapp),fdb=(()=>{try{return initializeFirestore(fapp,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){return getFirestore(fapp)}})();
 const SH=doc(fdb,"settings","shop"),J=id=>doc(fdb,"jobs",id);
@@ -19,13 +19,13 @@ const DEF={name:"SL-Mobile",phone:"020 5655 8855",fb:"SL-mobile",addr:"",email:"
  brands:["iPhone","Samsung","Oppo","Vivo","Xiaomi","Redmi","Huawei","Honor","Realme","OnePlus","Infinix","Tecno","Itel","Google Pixel","Nokia","Motorola","Sony","Asus"],
  issues:["ປ່ຽນໜ້າຈໍ","ກວດເຊັກທັງໝົດ","ກວດເຊັກລຳໂພງ","ປ່ຽນແບັດເຕີຣີ","ຕັ້ງ ID / ອີເມວ","ປ່ຽນຝາຫຼັງ","ປ່ຽນຊ່ອງສາກ","ລົງໂປຣແກຣມ / ອັບເດດ","ກູ້ຂໍ້ມູນ"],
  conds:["ສະພາບດີ","ໜ້າຈໍແຕກ","ຝາຫຼັງແຕກ","ຕົວເຄື່ອງມີຮອຍ / ບຸບ","ເປີດບໍ່ຕິດ","ຕົກນ້ຳ"],
- staff:[],colors:DEFCOLORS,
+ staff:[],colors:DEFCOLORS,prefix:"SL",
  foundL:["ປົກກະຕິດີ ຕາມທີ່ລູກຄ້າແຈ້ງ","ສະແກນນິ້ວມືຂາດ","ເມນບອດມີບັນຫາ","ແບັດເຕີຣີເສື່ອມ","ມີນ້ຳເຂົ້າ / ຂຶ້ນສະນິມ","ສາຍແພຂາດ","ຊ່ອງສາກເສຍ","ລຳໂພງ / ໄມ ເສຍ"],
  afterL:["ທົດສອບແລ້ວ ໃຊ້ງານໄດ້ປົກກະຕິ","ປ່ຽນໜ້າຈໍແລ້ວ","ປ່ຽນແບັດເຕີຣີແລ້ວ","ສະແກນນິ້ວມືໃຊ້ໄດ້","ລຳໂພງ / ໄມ ໃຊ້ໄດ້","ທຳຄວາມສະອາດແລ້ວ"]};
-function normS(d){const s={...DEF,...d},seen=new Set();s.colors=(s.colors&&s.colors.length?s.colors:DEFCOLORS);s.statuses=(s.statuses||DS).map(x=>({n:tn(x.n),c:x.c,d:x.d===undefined?tn(x.n)==="ລູກຄ້າມາຮັບແລ້ວ":!!x.d})).filter(x=>!seen.has(x.n)&&seen.add(x.n));return s}
+function normS(d){const s={...DEF,...d},seen=new Set();s.prefix=/^[A-Za-z]{1,6}$/.test(s.prefix||"")?s.prefix.toUpperCase():"SL";s.colors=(s.colors&&s.colors.length?s.colors:DEFCOLORS);s.statuses=(s.statuses||DS).map(x=>({n:tn(x.n),c:x.c,d:x.d===undefined?tn(x.n)==="ລູກຄ້າມາຮັບແລ້ວ":!!x.d})).filter(x=>!seen.has(x.n)&&seen.add(x.n));return s}
 const LBL={code:"ເລກງານ",pattern:"ລວດລາຍ",phone:"ເບີໂທ",cname:"ຊື່",addr:"ທີ່ຢູ່",cnote:"ໝາຍເຫດລູກຄ້າ",brand:"ຍີ່ຫໍ້",model:"ລຸ້ນ",color:"ສີ",lock:"ລະຫັດປົດລັອກ",issues:"ອາການ/ບໍລິການ",conds:"ສະພາບເຄື່ອງ",by:"ຜູ້ຮັບ",note:"ໝາຍເຫດ"};
 
-let loaded=false,dirty=false,dsel=new Set(),so="sink",jobs=[],S=normS({}),view="jobs",cur=null,q="",fs="",unsubs=[];
+let rawJobs=[],loaded=false,dirty=false,dsel=new Set(),so="sink",jobs=[],S=normS({}),view="jobs",cur=null,q="",fs="",unsubs=[];
 const $=s=>document.querySelector(s),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fd=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("en-GB")},ft=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};
 const sc=n=>(S.statuses.find(s=>s.n===n)||{c:"#7a8394"}).c,bd=n=>`<span class="badge" style="background:${sc(n)}">${esc(n)}</span>`;
@@ -58,8 +58,8 @@ onAuthStateChanged(auth,u=>{
   unsubs.forEach(f=>f());unsubs=[];
   if(!u){$("#app").style.display="none";$("#login").style.display="flex";return}
   $("#login").style.display="none";$("#app").style.display="flex";
-  unsubs.push(onSnapshot(SH,s=>{cnt(1);S=normS(s.exists()?s.data():{});refresh()},e=>qerr(e,"ອ່ານການຕັ້ງຄ່າບໍ່ໄດ້: ")));
-  unsubs.push(onSnapshot(collection(fdb,"jobs"),s=>{loaded=true;cnt(s.docChanges().length);jobs=s.docs.map(d=>{const x={...d.data(),id:d.id};x.status=tn(x.status);return x}).sort((a,b)=>(b.code||"").localeCompare(a.code||""));refresh()},e=>qerr(e,"ອ່ານຂໍ້ມູນບໍ່ໄດ້ (ກວດ Rules/UID): ")));
+  unsubs.push(onSnapshot(SH,s=>{cnt(1);S=normS(s.exists()?s.data():{});build();refresh()},e=>qerr(e,"ອ່ານການຕັ້ງຄ່າບໍ່ໄດ້: ")));
+  unsubs.push(onSnapshot(collection(fdb,"jobs"),s=>{loaded=true;cnt(s.docChanges().length);rawJobs=s.docs.map(d=>({...d.data(),id:d.id}));build();refresh()},e=>qerr(e,"ອ່ານຂໍ້ມູນບໍ່ໄດ້ (ກວດ Rules/UID): ")));
 });
 function navDraw(){
   const it=[["jobs","📱 ງານທັງໝົດ"],["dash","📊 ພາບລວມ"],["xls","📥 Excel"],["set","⚙️ ຕັ້ງຄ່າ"]],on=(view==="form"||view==="det")?"jobs":view;
@@ -76,6 +76,8 @@ function refresh(){
   if(view==="det"&&a&&$("#m").contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
   draw();
 }
+const numOf=j=>parseInt((j.code||"").replace(/\D/g,""))||0;
+function build(){jobs=rawJobs.map(r=>{const x={...r};x.status=tn(x.status);const n=numOf(r);if(n)x.code=S.prefix+"-"+String(n).padStart(5,"0");return x}).sort((a,b)=>numOf(b)-numOf(a))}
 const go=(v,id)=>{dirty=false;view=v;cur=id||null;draw();scrollTo(0,0)};
 const logout=()=>signOut(auth);
 const stat=s=>{fs=s;q="";go("jobs")};
@@ -89,7 +91,7 @@ function filt(){
     return[j.code,j.cname,j.phone,j.brand,j.model].join(" ").toLowerCase().includes(t)});
 }
 const jrow=j=>`<div class="jr" onclick="go('det','${j.id}')"><div class="cd">${esc(j.code)}</div><div class="nm"><b>${esc(j.cname)}</b><small>${esc(j.phone)}${j.brand||j.model?" · "+esc(((j.brand||"")+" "+(j.model||"")).trim()):""}${j.tech?" · 🔧"+esc(j.tech):""}</small></div>${bd(j.status)}</div>`;
-function sortJ(L){const sk=new Set(S.statuses.filter(x=>x.d).map(x=>x.n)),cd=(a,b)=>(b.code||"").localeCompare(a.code||"");
+function sortJ(L){const sk=new Set(S.statuses.filter(x=>x.d).map(x=>x.n)),cd=(a,b)=>numOf(b)-numOf(a);
   if(so==="old")return[...L].sort((a,b)=>-cd(a,b));if(so==="new")return[...L].sort(cd);
   if(so==="status"){const ix=n=>{const i=S.statuses.findIndex(x=>x.n===n);return i<0?99:i};return[...L].sort((a,b)=>ix(a.status)-ix(b.status)||cd(a,b))}
   return[...L].sort((a,b)=>(sk.has(a.status)-sk.has(b.status))||cd(a,b))}
@@ -127,7 +129,7 @@ function vForm(){
   const num=cur?(parseInt((j.code||"").replace(/\D/g,""))||""):(jobs.reduce((a,x)=>Math.max(a,parseInt((x.code||"").replace(/\D/g,""))||0),0)+1);
   pat=[...(j.pattern||[])];P[1]={p:[],g:[]};
   $("#m").innerHTML=`<h2>${cur?"ແກ້ໄຂງານ "+esc(j.code):"ຮັບເຄື່ອງໃໝ່"}</h2><div class="card"><datalist id="dl">${[...new Map(jobs.map(x=>[x.phone,x])).values()].map(x=>`<option value="${esc(x.phone)}">${esc(x.cname)}</option>`).join("")}</datalist>
-<label>ເລກງານ (ແກ້ໄຂໄດ້)</label><div class="inl"><span style="align-self:center;font-weight:700">SL-</span><input id="f_code" inputmode="numeric" value="${num}" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+<label>ເລກງານ (ແກ້ໄຂໄດ້)</label><div class="inl"><span style="align-self:center;font-weight:700">${esc(S.prefix)}-</span><input id="f_code" inputmode="numeric" value="${num}" oninput="this.value=this.value.replace(/\D/g,'')"></div>
 <hr><b>ລູກຄ້າ</b><div class="two"><div><label>ເບີໂທ * (ຕົວເລກເທົ່ານັ້ນ)</label><input id="f_phone" list="dl" inputmode="numeric" value="${v("phone")}" oninput="this.value=this.value.replace(/\D/g,'')" onchange="fill(this.value)"></div><div><label>ຊື່ລູກຄ້າ *</label><input id="f_cname" value="${v("cname")}"></div></div>
 <label>ທີ່ຢູ່ (ບໍ່ບັງຄັບ)</label><input id="f_addr" value="${v("addr")}"><label>ໝາຍເຫດລູກຄ້າ</label><input id="f_cnote" value="${v("cnote")}">
 <hr><b>ໂທລະສັບ</b><div class="two"><div>${pl("brands","ຍີ່ຫໍ້")}<select id="f_brand">${opts(S.brands,j.brand||"","— ເລືອກຍີ່ຫໍ້ —")}</select></div><div><label>ລຸ້ນ</label><input id="f_model" value="${v("model")}"></div></div>
@@ -199,8 +201,8 @@ async function saveJob(){
   o.issues=getSel("g_issues");o.issue=o.issues.join(", ");o.conds=getSel("g_conds");o.cond=o.conds.join(", ");o.pattern=[...pat];
   if(!o.phone||!o.cname||!o.issues.length){toast("ກະລຸນາໃສ່ເບີໂທ, ຊື່ ແລະ ເລືອກອາການເສຍ");return}
   const n=parseInt($("#f_code").value,10);if(!n||n<1){toast("ກະລຸນາໃສ່ເລກງານ");return}
-  o.code="SL-"+String(n).padStart(5,"0");
-  if(jobs.some(x=>x.code===o.code&&x.id!==cur)){toast("ເລກງານ "+o.code+" ມີແລ້ວ");return}
+  o.code=S.prefix+"-"+String(n).padStart(5,"0");
+  if(jobs.some(x=>numOf(x)===n&&x.id!==cur)){toast("ເລກງານ "+o.code+" ມີແລ້ວ");return}
   if(o.by)lsSet("lastBy",o.by);
   saving=true;
   try{
@@ -230,8 +232,8 @@ function vDet(){
   const L=(a,b)=>b?`<div><label>${a}</label>${esc(b)}</div>`:"",a0=(j.acct||[])[0]||{};
   const is=(j.issues&&j.issues.length?j.issues:[j.issue]).filter(Boolean).join(", "),cs=(j.conds&&j.conds.length?j.conds:[j.cond]).filter(Boolean).join(", ");
   const u=a0.u||"",dm=DOM.find(d=>u.toLowerCase().endsWith(d)),un=dm?u.slice(0,-dm.length):u,dsel=dm||(u?"":DOM[0]);
-  $("#m").innerHTML=`<div class="row" style="margin-bottom:10px"><button class="btn g" onclick="go('jobs')">← ກັບ</button><button class="btn g" onclick="go('form','${j.id}')">ແກ້ໄຂ</button><button class="btn r" onclick="delJob('${j.id}')">ລົບ</button></div>
-<div class="card hd"><div class="row"><div style="flex:3"><div class="big1">${esc(j.code)}</div><div class="cn">${esc(j.cname)}</div><div>📞 ${esc(j.phone)}</div>${j.tech?`<div>🔧 ຊ່າງ: <b>${esc(j.tech)}</b></div>`:""}</div><div style="flex:none">${bd(j.status)}</div></div></div>
+  $("#m").innerHTML=`<div class="row" style="margin-bottom:10px"><button class="btn g" onclick="go('jobs')">← ກັບ</button><button class="btn g" onclick="go('form','${j.id}')">ແກ້ໄຂທັງໝົດ</button><button class="btn r" onclick="delJob('${j.id}')">ລົບ</button></div>
+<div class="card hd"><div class="row"><div style="flex:3"><div class="big1">${esc(j.code)}</div><div class="cn">${esc(j.cname)}</div><div>📞 ${esc(j.phone)}</div>${j.tech?`<div>🔧 ຊ່າງ: <b>${esc(j.tech)}</b></div>`:""}</div><div style="flex:none;text-align:right">${bd(j.status)}<br><button class="btn" style="margin-top:8px" onclick="qEdit('${j.id}')">✏️ ແກ້ໄຂ</button></div></div></div>
 <div class="card"><div class="two">${L("ຍີ່ຫໍ້ / ລຸ້ນ / ສີ",[j.brand,j.model,j.color].filter(Boolean).join(" "))}${j.lock||(j.pattern&&j.pattern.length)?`<div><label>ລະຫັດປົດລັອກ</label>${esc(j.lock||"")}${j.pattern&&j.pattern.length?`<div>${patSvg(j.pattern,110,true)}</div>`:""}</div>`:""}${L("ອາການ / ບໍລິການ",is)}${L("ສະພາບເຄື່ອງ",cs)}${L("ວັນທີ / ເວລາຮັບ",fd(j.date)+" "+ft(j.date))}${L("ຜູ້ຮັບເຄື່ອງ",j.by)}${L("ທີ່ຢູ່",j.addr)}${L("ໝາຍເຫດລູກຄ້າ",j.cnote)}${L("ໝາຍເຫດ",j.note)}${L("IMEI",j.imei)}</div></div>
 <div id="svc" oninput="dz()" onclick="dz()"><div class="card"><b>ບໍລິການ / ອາການ</b> <small style="color:var(--mu)">ເພີ່ມພາຍຫຼັງໄດ້ ຖ້າລູກຄ້າຕັດສິນໃຈເພີ່ມ</small>${pl("issues","ເລືອກບໍລິການ")}${chips("g_issues",S.issues,j.issues||(j.issue?[j.issue]:[]),true)}<button class="btn" style="margin-top:10px" onclick="saveSvc('${j.id}')">ບັນທຶກບໍລິການ</button></div></div>
 <div class="card" id="phc" style="display:none"><b>ຮູບກ່ອນຮັບ (ຂັ້ນຕອນ 1)</b><div class="chips" id="phl" style="gap:8px;margin-top:6px"></div></div>
@@ -359,7 +361,7 @@ function xDl(){
 function lst(key,title,col){const lab=v=>typeof v==="string"?v:v.n;
   return`<div class="card"><b>${title}</b><div class="chips">${S[key].map((v,i)=>`<span class="chip x">${col?`<i style="background:${esc(v.c)}"></i>`:""}${esc(lab(v))} <b onclick="topL('${key}',${i})" style="color:#1d4aa3" title="ຍ້າຍຂຶ້ນເທິງສຸດ">⬆</b><b onclick="delL('${key}',${i})">×</b></span>`).join("")||'<span style="color:var(--mu)">ຍັງບໍ່ມີ</span>'}</div><div class="inl" style="margin-top:8px">${col?`<input type="color" id="n_${key}_c" value="#808080" style="max-width:60px;padding:2px">`:""}<input id="n_${key}" placeholder="ເພີ່ມລາຍການໃໝ່..." onkeydown="if(event.key==='Enter')addL('${key}')"><button class="btn" onclick="addL('${key}')">+ ເພີ່ມ</button></div></div>`}
 function vSet(){
-  $("#m").innerHTML=`<h2>ຕັ້ງຄ່າ</h2><div class="card"><b>ການໃຊ້ໂควตาฟรີ (ປະມານ)</b><div>ອ່ານຂໍ້ມູນວັນນີ້ໃນເຄື່ອງນີ້: <b>${readsToday().toLocaleString()}</b> / ${DAYLIM.toLocaleString()}</div><small style="color:var(--mu)">ນັບສະເພາະເຄື່ອງນີ້ ຕົວເລກຈິງເບິ່ງໄດ້ທີ່ Firebase Console → Firestore → Usage</small></div>${lst("brands","ຍີ່ຫໍ້ໂທລະສັບ")}${lst("issues","ອາການເສຍ / ບໍລິການ")}${lst("conds","ສະພາບເຄື່ອງກ່ອນຮັບ")}${lst("colors","ສີເຄື່ອງ",true)}${lst("foundL","ຜົນກວດຫຼັງແກະເຄື່ອງ (ຂັ້ນຕອນ 2)")}${lst("afterL","ສະພາບຫຼັງສ້ອມສຳເລັດ (ຂັ້ນຕອນ 3)")}${lst("staff","ພະນັກງານ (ຜູ້ຮັບເຄື່ອງ / ຊ່າງ)")}
+  $("#m").innerHTML=`<h2>ຕັ້ງຄ່າ</h2><div class="card"><b>ຄຳນຳໜ້າລະຫັດງານ</b><div class="inl" style="margin-top:6px"><input id="s_prefix" value="${esc(S.prefix)}" maxlength="6" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'').toUpperCase();document.getElementById('pf_pv').textContent=(this.value||'..')+'-00001'"><button class="btn" onclick="savePrefix()">ບັນທຶກ</button></div><small style="color:var(--mu)">ຕົວຢ່າງ: <b id="pf_pv">${esc(S.prefix)}-00001</b> — ປ່ຽນແລ້ວ ງານເກົ່າທັງໝົດປ່ຽນຕາມ ເລກລຳດັບຄືເກົ່າ (ປ່ຽນສະເພາະການສະແດງ ບໍ່ແກ້ຂໍ້ມູນເກົ່າ)</small></div><div class="card"><b>ການໃຊ້ໂควตาฟรີ (ປະມານ)</b><div>ອ່ານຂໍ້ມູນວັນນີ້ໃນເຄື່ອງນີ້: <b>${readsToday().toLocaleString()}</b> / ${DAYLIM.toLocaleString()}</div><small style="color:var(--mu)">ນັບສະເພາະເຄື່ອງນີ້ ຕົວເລກຈິງເບິ່ງໄດ້ທີ່ Firebase Console → Firestore → Usage</small></div>${lst("brands","ຍີ່ຫໍ້ໂທລະສັບ")}${lst("issues","ອາການເສຍ / ບໍລິການ")}${lst("conds","ສະພາບເຄື່ອງກ່ອນຮັບ")}${lst("colors","ສີເຄື່ອງ",true)}${lst("foundL","ຜົນກວດຫຼັງແກະເຄື່ອງ (ຂັ້ນຕອນ 2)")}${lst("afterL","ສະພາບຫຼັງສ້ອມສຳເລັດ (ຂັ້ນຕອນ 3)")}${lst("staff","ພະນັກງານ (ຜູ້ຮັບເຄື່ອງ / ຊ່າງ)")}
 <div class="card"><b>ສະຖານະງານ</b>${S.statuses.map((s,i)=>`<div class="row" style="margin-top:6px"><input id="st_n${i}" value="${esc(s.n)}"><input id="st_c${i}" type="color" value="${s.c}" style="max-width:60px;flex:none;min-width:0"><label style="display:flex;align-items:center;gap:4px;margin:0;flex:none;min-width:0;color:var(--tx)"><input type="checkbox" id="st_d${i}" ${s.d?"checked":""} style="width:auto"> ລົງລຸ່ມ</label><button class="btn g" onclick="mvSt(${i},-1)">↑</button><button class="btn g" onclick="mvSt(${i},1)">↓</button><button class="btn r" onclick="delSt(${i})">ລົບ</button></div>`).join("")}<div class="row" style="margin-top:10px"><button class="btn g" onclick="addSt()">+ ເພີ່ມສະຖານະ</button><button class="btn" onclick="saveSt()">ບັນທຶກສະຖານະ</button></div></div>
 <div class="card"><b>ຂໍ້ມູນຮ້ານ</b><div class="two"><div><label>ຊື່ຮ້ານ</label><input id="s_name" value="${esc(S.name)}"></div><div><label>ເບີໂທ</label><input id="s_phone" value="${esc(S.phone)}"></div><div><label>Facebook</label><input id="s_fb" value="${esc(S.fb)}"></div><div><label>ອີເມວ</label><input id="s_email" value="${esc(S.email)}"></div></div><label>ທີ່ຢູ່</label><input id="s_addr" value="${esc(S.addr)}"><label>ໂລໂກ້ (ຊື່ໄຟລ໌ທີ່ອັບໂຫຼດໄວ້ໃນ GitHub ເຊັ່ນ logo.png)</label><input id="s_logo" value="${esc(S.logo)}"><div class="row" style="margin-top:10px"><button class="btn" onclick="saveShop()">ບັນທຶກ</button></div></div>
 <div class="card"><b>ບັນຊີເຂົ້າລະບົບ</b><label>ລະຫັດຜ່ານປັດຈຸບັນ</label><input id="c_old" type="password"><div class="two"><div><label>ລະຫັດຜ່ານໃໝ່ (6 ຕົວຂຶ້ນໄປ)</label><input id="c_np" type="password"></div><div><label>ອີເມວໃໝ່ (ລະບົບຈະສົ່ງລິ້ງຢືນຢັນ)</label><input id="c_ne" type="email"></div></div><div class="row" style="margin-top:8px"><button class="btn" onclick="chPw()">ປ່ຽນລະຫັດຜ່ານ</button><button class="btn" onclick="chEm()">ປ່ຽນອີເມວ</button></div></div>
@@ -379,4 +381,19 @@ async function chPw(){const n=$("#c_np").value;if(n.length<6){toast("ລະຫ�
 async function chEm(){const n=$("#c_ne").value.trim();if(!n){toast("ໃສ່ອີເມວໃໝ່");return}const u=await reauth();if(u&&await save(()=>verifyBeforeUpdateEmail(u,n)))toast("ສົ່ງລິ້ງຢືນຢັນໄປອີເມວໃໝ່ແລ້ວ")}
 function backup(){const b=new Blob([JSON.stringify({settings:S,jobs},null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sl-mobile-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
 async function restore(f){if(!f||!confirm("ການກູ້ຄືນຈະຂຽນທັບງານທີ່ມີລະຫັດດຽວກັນ ດຳເນີນການຕໍ່?"))return;try{const d=JSON.parse(await f.text());for(const j of d.jobs||[]){const{id,...r}=j;await setDoc(J(id),r)}if(d.settings)await setDoc(SH,d.settings);toast("ກູ້ຄືນແລ້ວ "+(d.jobs||[]).length+" ງານ")}catch(e){toast("ກູ້ຄືນບໍ່ສຳເລັດ: "+(e.code||e.message))}}
-Object.assign(window,{stkShare,showQr,saveSvc,ppSet,ppReset,closePv,pvPrint,dz,saveStep,setso,dtg,dall,xCnt,xDl,qt,qa,qac,addPics,rmPic,viewPic,padClear,askTech,setTech,mtAdd,chTech,closeMd,topL,sendLink,go,logout,stat,setq,setfs,fill,tg,saveJob,pr,chSt,saveAcct,delJob,addL,delL,saveShop,saveSt,addSt,delSt,mvSt,chPw,chEm,backup,restore});
+// ແກ້ໄຂດ່ວນ (ໜ້າຕ່າງປ໊ອບອັບ) + ຄຳນຳໜ້າ
+function qEdit(id){const j=jobs.find(x=>x.id===id);if(!j)return;closeMd();const m=document.createElement("div");m.id="md";m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;display:flex;align-items:center;justify-content:center;padding:14px";
+  m.innerHTML=`<div class="card" style="width:min(420px,100%);max-height:92vh;overflow:auto;margin:0"><b style="font-size:18px">ແກ້ໄຂຂໍ້ມູນລູກຄ້າ</b>
+<label>ເລກງານ</label><div class="inl"><span style="align-self:center;font-weight:700">${esc(S.prefix)}-</span><input id="q_code" inputmode="numeric" value="${numOf(j)}" oninput="this.value=this.value.replace(/\\D/g,'')"></div>
+<label>ຊື່ລູກຄ້າ</label><input id="q_cname" value="${esc(j.cname)}"><label>ເບີໂທ</label><input id="q_phone" inputmode="numeric" value="${esc(j.phone)}" oninput="this.value=this.value.replace(/\\D/g,'')">
+<label>ທີ່ຢູ່</label><input id="q_addr" value="${esc(j.addr||"")}"><label>ໝາຍເຫດລູກຄ້າ</label><input id="q_cnote" value="${esc(j.cnote||"")}">
+<div class="row" style="margin-top:12px"><button class="btn" onclick="saveQuick('${j.id}')">ບັນທຶກ</button><button class="btn g" onclick="closeMd()">ຍົກເລີກ</button></div></div>`;document.body.appendChild(m)}
+async function saveQuick(id){const j=jobs.find(x=>x.id===id);if(!j)return;
+  const n=parseInt($("#q_code").value,10),o={cname:$("#q_cname").value.trim(),phone:$("#q_phone").value.replace(/\D/g,""),addr:$("#q_addr").value.trim(),cnote:$("#q_cnote").value.trim()};
+  if(!o.cname||!o.phone){toast("ກະລຸນາໃສ່ຊື່ ແລະ ເບີໂທ");return}if(!n||n<1){toast("ກະລຸນາໃສ່ເລກງານ");return}
+  if(jobs.some(x=>numOf(x)===n&&x.id!==id)){toast("ເລກງານນີ້ມີແລ້ວ");return}
+  o.code=S.prefix+"-"+String(n).padStart(5,"0");const ch=Object.keys(o).filter(k=>String(j[k]||"")!==String(o[k]||"")).map(k=>LBL[k]||k);
+  if(!ch.length){closeMd();return}
+  if(await save(()=>updateDoc(J(id),{...o,log:[...(j.log||[]),{t:new Date().toISOString(),f:ch}]}))){closeMd();await syncQ({...j,...o});toast("ບັນທຶກແລ້ວ")}}
+function savePrefix(){const v=$("#s_prefix").value.trim().toUpperCase();if(!/^[A-Z]{1,6}$/.test(v)){toast("ໃຊ້ຕົວອັກສອນ A-Z 1-6 ຕົວ");return}if(v===S.prefix)return;if(confirm("ປ່ຽນຄຳນຳໜ້າເປັນ "+v+"-xxxxx ? ງານເກົ່າທັງໝົດຈະປ່ຽນຕາມ ເລກລຳດັບຄືເກົ່າ"))pushS({prefix:v})}
+Object.assign(window,{qEdit,saveQuick,savePrefix,stkShare,showQr,saveSvc,ppSet,ppReset,closePv,pvPrint,dz,saveStep,setso,dtg,dall,xCnt,xDl,qt,qa,qac,addPics,rmPic,viewPic,padClear,askTech,setTech,mtAdd,chTech,closeMd,topL,sendLink,go,logout,stat,setq,setfs,fill,tg,saveJob,pr,chSt,saveAcct,delJob,addL,delL,saveShop,saveSt,addSt,delSt,mvSt,chPw,chEm,backup,restore});
