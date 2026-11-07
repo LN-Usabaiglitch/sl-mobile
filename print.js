@@ -14,9 +14,16 @@ const logo=(S,h)=>S.logo?`<img src="${esc(new URL(S.logo,location.href).href)}" 
 const ln="white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
 const list=(a,s)=>(a&&a.length?a:[s]).filter(Boolean);
 export const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
-function run(body,page,margin,win,z=1){
+let CTX={};
+function mk(body,page,margin,z,bar){
+  const o=CTX.opt||{},tf=((+o.s&&+o.s!==100)||+o.dx||+o.dy)?`.pg{transform:translate(${+o.dx||0}mm,${+o.dy||0}mm) scale(${(+o.s||100)/100});transform-origin:0 0}`:"";
   const ph=new URL("PhetsarathOT.ttf",location.href).href;
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SL-Mobile</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet"><style>@font-face{font-family:'Phetsarath OT';src:local('Phetsarath OT'),local('PhetsarathOT'),url('${ph}') format('truetype')}@page{size:${page};margin:${margin}}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}html,body{margin:0;padding:0}body{font-family:'Phetsarath OT','Noto Sans Lao',sans-serif;color:#000}svg{width:100%;height:100%;display:block}.pg{break-after:page;overflow:hidden;word-break:break-word}.pg:last-child{break-after:auto}hr{border:0;border-top:1px solid #000;margin:2mm 0}.bar{display:none}@media screen{body{background:#e9edf3}.bar{display:flex;gap:10px;align-items:center;padding:10px;background:#12306b;color:#fff;font:14px sans-serif;position:sticky;top:0;z-index:2}.bar button{padding:10px 18px;font-size:16px;border:0;border-radius:8px;background:#fff}.pg{zoom:${z};background:#fff;margin:12px auto}}</style></head><body><div class="bar"><button onclick="window.print()">🖨 ພິມ</button><span>ຂະໜາດກະດາດ: ${page}</span></div>${body}</body></html>`;
+  const scr=bar?`body{background:#e9edf3}.bar{display:flex;gap:10px;align-items:center;padding:10px;background:#12306b;color:#fff;font:14px sans-serif;position:sticky;top:0;z-index:2}.bar button{padding:10px 18px;font-size:16px;border:0;border-radius:8px;background:#fff}.pg{zoom:${z};background:#fff;margin:12px auto}`:`body{background:#fff;padding:${margin}}`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SL-Mobile</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet"><style>@font-face{font-family:'Phetsarath OT';src:local('Phetsarath OT'),local('PhetsarathOT'),url('${ph}') format('truetype')}@page{size:${page};margin:${margin}}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}html,body{margin:0;padding:0}body{font-family:'Phetsarath OT','Noto Sans Lao',sans-serif;color:#000}svg{width:100%;height:100%;display:block}.pg{break-after:page;overflow:hidden;word-break:break-word}.pg:last-child{break-after:auto}hr{border:0;border-top:1px solid #000;margin:2mm 0}.bar{display:none}${tf}@media screen{${scr}}</style></head><body>${bar?`<div class="bar"><button onclick="window.print()">🖨 ພິມ</button><span>ຂະໜາດກະດາດ: ${page}</span></div>`:""}${body}</body></html>`;
+}
+function run(body,page,margin,win,z=1){
+  if(CTX.preview){CTX.preview({html:mk(body,page,margin,z,false),htmlBar:mk(body,page,margin,z,true),page,margin});return}
+  const html=mk(body,page,margin,z,true);
   if(win){const d=win.document;d.open();d.write(html);d.close();setTimeout(()=>{try{win.focus();win.print()}catch(e){}},900);return}
   const f=document.createElement("iframe");
   f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0";
@@ -26,6 +33,7 @@ function run(body,page,margin,win,z=1){
   setTimeout(()=>{(d.fonts?d.fonts.ready:Promise.resolve()).then(()=>{try{w.focus();w.print()}catch(e){alert("ພິມບໍ່ໄດ້: "+e.message)}setTimeout(()=>f.remove(),60000)})},1000);
 }
 export function printDoc(kind,j,S,warn,x={}){
+  CTX=x;
   const dev=[j.brand,j.model,j.color].filter(Boolean).join(" ");
   if(kind==="stk"){
     const sv=list(j.issues,j.issue).join(", "),ls=(a,b)=>`<div style="display:flex;gap:.8mm;font-size:7px;line-height:1.35;min-width:0"><span style="flex:none">${a}</span><span style="flex:1;min-width:0;font-weight:700;${ln}">${b}</span></div>`;
@@ -43,7 +51,7 @@ ${ls("ເບີ:",esc(j.phone))}${ls("ລຸ້ນ / ສີ:",esc([j.brand,j.mod
 <div style="text-align:center;font-size:12px;font-weight:700;text-decoration:underline;color:#12306b">ໃບຮັບເຄື່ອງຮ້ານ ${esc(S.name)}</div>
 <div style="display:flex;gap:2.5mm;margin-top:2mm">${f("ຊື່:",esc(j.cname),"flex:1.3")}${f("Code:",esc(j.code),"flex:1")}${f("ວັນທີ:",fd(j.date)+" "+ft(j.date),"flex:1.35")}</div>
 ${dv?`<div style="margin-top:1mm;font-size:7px;${ln}">ເຄື່ອງ / ບໍລິການ: <b>${esc(dv)}</b></div>`:""}
-<div style="display:flex;gap:2mm;margin-top:1.2mm;flex:1;min-height:0"><div style="flex:1;font-size:6.8px;line-height:1.35"><b><u>❖ ໝາຍເຫດ:</u></b><br>▪ ກະລຸນາຮັກສາໃບຝາກເຄື່ອງຂອງທ່ານໃຫ້ດີ ເວລາຮັບເຄື່ອງໃຫ້ເອົາໃບຝາກເຄື່ອງມາພ້ອມ<br>▪ ການຮັບປະກັນເຄື່ອງສ້ອມ ແມ່ນຈະເລີ່ມນັບຕັ້ງແຕ່ມື້ທີ່ທາງຮ້ານເຮົາໄດ້ແຈ້ງໃຫ້ມາຮັບເອົາເຄື່ອງ, ຖ້າຫາກວ່າພາຍໃນ 1-3 ເດືອນ ລູກຄ້າຍັງບໍ່ມາຮັບເອົາເຄື່ອງ ທາງຮ້ານຈະບໍ່ສາມາດຮັບປະກັນເຄື່ອງຂອງລູກຄ້າໄດ້</div><div style="width:16mm;flex:none;text-align:center;font-size:5.5px;line-height:1.2"><div style="width:14mm;height:14mm;margin:0 auto">${qr(x.url||j.code)}</div>ສະແກນກວດສະຖານະ</div></div>
+<div style="display:flex;gap:2mm;margin-top:1.2mm;flex:1;min-height:0"><div style="flex:1;font-size:6.8px;line-height:1.35"><b><u>❖ ໝາຍເຫດ:</u></b><br>▪ ກະລຸນາຮັກສາໃບຝາກເຄື່ອງຂອງທ່ານໃຫ້ດີ ເວລາຮັບເຄື່ອງໃຫ້ເອົາໃບຝາກເຄື່ອງມາພ້ອມ<br>▪ ການຮັບປະກັນເຄື່ອງສ້ອມ ແມ່ນຈະເລີ່ມນັບຕັ້ງແຕ່ມື້ທີ່ທາງຮ້ານເຮົາໄດ້ແຈ້ງໃຫ້ມາຮັບເອົາເຄື່ອງ, ຖ້າຫາກວ່າພາຍໃນ 1-3 ເດືອນ ລູກຄ້າຍັງບໍ່ມາຮັບເອົາເຄື່ອງ ທາງຮ້ານຈະບໍ່ສາມາດຮັບປະກັນເຄື່ອງຂອງລູກຄ້າໄດ້</div><div style="width:16mm;flex:none;text-align:center;font-size:5.5px;line-height:1.2"><div style="width:14mm;height:14mm;margin:0 auto">${qr(x.url||j.code)}</div>QR ຕິດຕາມເຄື່ອງ</div></div>
 <div style="font-size:7.5px"><u>ເບີໂທຕິດຕໍ່: ${esc(S.phone)}</u> &nbsp; <u>Facebook: ${esc(S.fb)}</u></div>
 <div style="text-align:center;font-weight:700;font-size:7.5px;margin-top:.8mm">(ຂໍຂອບໃຈທຸກທ່ານທີ່ມາອຸດໜູນຮ້ານ ${esc(S.name)})</div></div>`,"A4 portrait","5mm",x.win,3);
   }else if(kind==="acc"){

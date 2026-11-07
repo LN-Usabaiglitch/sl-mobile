@@ -12,11 +12,11 @@
 .st{display:block;color:#fff;text-align:center;font-size:22px;font-weight:700;border-radius:12px;padding:12px;margin-top:10px}
 .ok{background:#e6f7ee;border:1px solid #1f9d6b;color:#146c49;border-radius:12px;padding:12px;margin-top:12px;text-align:center;font-weight:700}
 label{display:block;font-size:12px;color:#667085;margin-top:10px}.tl{color:#667085;font-size:14px}
-a{color:#1d4aa3}</style></head><body><div class="w"><div class="hd"><b id="sn">SL-Mobile</b>ກວດສະຖານະເຄື່ອງຂອງທ່ານ</div><div id="o"><div class="c" style="text-align:center">ກຳລັງໂຫຼດ…</div></div></div>
+a{color:#1d4aa3}</style></head><body><div class="w"><div class="hd"><b id="sn">SL-Mobile</b>ຕິດຕາມເຄື່ອງຂອງທ່ານ</div><div id="o"><div class="c" style="text-align:center">ກຳລັງໂຫຼດ…</div></div></div>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getFirestore,doc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {firebaseConfig} from "./firebase-config.js?v=20261106";
+import {firebaseConfig} from "./firebase-config.js?v=20261106c";
 const db=getFirestore(initializeApp(firebaseConfig)),o=document.getElementById("o");
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fd=d=>{const x=new Date(d);return isNaN(x)?"":x.toLocaleDateString("en-GB")+" "+x.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})};

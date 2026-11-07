@@ -1,13 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ✅ หน้าสถานะสำหรับลูกค้า (สแกน QR): อ่านได้ทีละรายการเท่านั้น ห้าม list, ห้ามเขียน
+    // เพิ่มบล็อกนี้ (ไม่ต้องใส่ UID): ให้ลูกค้าสแกน QR อ่านหน้าสถานะได้ทีละรายการ ห้าม list
     match /public/{token} {
       allow get: if true;
       allow list: if false;
-      allow write: if request.auth != null && request.auth.uid == "PUT_OWNER_UID";
     }
-    // แก้ PUT_OWNER_UID เป็น UID ของเจ้าของร้าน (Firebase Console > Authentication > Users)
+    // กฎเดิมของคุณ (เจ้าของคนเดียว) คงไว้เหมือนเดิม — แก้ PUT_OWNER_UID เป็น UID จริง
     match /{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == "PUT_OWNER_UID";
     }

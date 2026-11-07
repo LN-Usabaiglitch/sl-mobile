@@ -1,8 +1,8 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,updatePassword,reauthenticateWithCredential,EmailAuthProvider,verifyBeforeUpdateEmail} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,updateDoc,deleteDoc,runTransaction,getDocs} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {firebaseConfig} from "./firebase-config.js?v=20261106";
-import {printDoc,patInner,patSvg,isIOS} from "./print.js?v=20261106";
+import {firebaseConfig} from "./firebase-config.js?v=20261106c";
+import {printDoc,patInner,patSvg,isIOS} from "./print.js?v=20261106c";
 
 const fapp=initializeApp(firebaseConfig),auth=getAuth(fapp),fdb=(()=>{try{return initializeFirestore(fapp,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){return getFirestore(fapp)}})();
 const SH=doc(fdb,"settings","shop"),J=id=>doc(fdb,"jobs",id);
@@ -233,22 +233,77 @@ function vDet(){
   $("#m").innerHTML=`<div class="row" style="margin-bottom:10px"><button class="btn g" onclick="go('jobs')">← ກັບ</button><button class="btn g" onclick="go('form','${j.id}')">ແກ້ໄຂ</button><button class="btn r" onclick="delJob('${j.id}')">ລົບ</button></div>
 <div class="card hd"><div class="row"><div style="flex:3"><div class="big1">${esc(j.code)}</div><div class="cn">${esc(j.cname)}</div><div>📞 ${esc(j.phone)}</div>${j.tech?`<div>🔧 ຊ່າງ: <b>${esc(j.tech)}</b></div>`:""}</div><div style="flex:none">${bd(j.status)}</div></div></div>
 <div class="card"><div class="two">${L("ຍີ່ຫໍ້ / ລຸ້ນ / ສີ",[j.brand,j.model,j.color].filter(Boolean).join(" "))}${j.lock||(j.pattern&&j.pattern.length)?`<div><label>ລະຫັດປົດລັອກ</label>${esc(j.lock||"")}${j.pattern&&j.pattern.length?`<div>${patSvg(j.pattern,110,true)}</div>`:""}</div>`:""}${L("ອາການ / ບໍລິການ",is)}${L("ສະພາບເຄື່ອງ",cs)}${L("ວັນທີ / ເວລາຮັບ",fd(j.date)+" "+ft(j.date))}${L("ຜູ້ຮັບເຄື່ອງ",j.by)}${L("ທີ່ຢູ່",j.addr)}${L("ໝາຍເຫດລູກຄ້າ",j.cnote)}${L("ໝາຍເຫດ",j.note)}${L("IMEI",j.imei)}</div></div>
+<div id="svc" oninput="dz()" onclick="dz()"><div class="card"><b>ບໍລິການ / ອາການ</b> <small style="color:var(--mu)">ເພີ່ມພາຍຫຼັງໄດ້ ຖ້າລູກຄ້າຕັດສິນໃຈເພີ່ມ</small>${pl("issues","ເລືອກບໍລິການ")}${chips("g_issues",S.issues,j.issues||(j.issue?[j.issue]:[]),true)}<button class="btn" style="margin-top:10px" onclick="saveSvc('${j.id}')">ບັນທຶກບໍລິການ</button></div></div>
 <div class="card" id="phc" style="display:none"><b>ຮູບກ່ອນຮັບ (ຂັ້ນຕອນ 1)</b><div class="chips" id="phl" style="gap:8px;margin-top:6px"></div></div>
 <div class="card"><b>ປ່ຽນສະຖານະ</b><div class="row"><select id="ns">${S.statuses.map(s=>`<option ${s.n===j.status?"selected":""}>${esc(s.n)}</option>`).join("")}</select><button class="btn" onclick="chSt('${j.id}')">ອັບເດດ</button></div>
 <label>ຊ່າງຜູ້ເຮັດ</label><div class="row"><select id="tc">${opts(S.staff,j.tech||"","— ບໍ່ມີ —")}</select><button class="btn g" onclick="chTech('${j.id}')">ມອບໝາຍ</button></div>
 <div style="margin-top:8px;color:#667085;font-size:13px">${[...(j.hist||[]).map(h=>[h.t,"ສະຖານະ → "+tn(h.s)]),...(j.log||[]).map(l=>[l.t,"ແກ້ໄຂ: "+l.f.join(", ")])].sort((a,b)=>b[0].localeCompare(a[0])).map(h=>`${fd(h[0])} ${ft(h[0])} — ${esc(h[1])}`).join("<br>")}</div></div>
 <div id="stp" oninput="dz()" onclick="dz()">${stepCard(j,2)}${stepCard(j,3)}</div>
-<div class="card"><b>ສົ່ງສະຖານະໃຫ້ລູກຄ້າ</b><div class="row" style="margin-top:8px"><button class="btn g" onclick="sendLink('${j.id}','copy')">ສຳເນົາຂໍ້ຄວາມ + ລິ້ງ</button><button class="btn" style="background:#128c4a" onclick="sendLink('${j.id}','wa')">ສົ່ງທາງ WhatsApp</button></div></div>
+<div class="card"><b>ສົ່ງສະຖານະໃຫ້ລູກຄ້າ</b><div class="row" style="margin-top:8px"><button class="btn g" onclick="showQr('${j.id}')">📱 ສະແດງ QR</button><button class="btn g" onclick="sendLink('${j.id}','copy')">ສຳເນົາຂໍ້ຄວາມ + ລິ້ງ</button><button class="btn" style="background:#128c4a" onclick="sendLink('${j.id}','wa')">ສົ່ງທາງ WhatsApp</button></div></div>
 <div class="card"><b>ພິມເອກະສານ</b><div class="row" style="margin-top:8px"><button class="btn g" onclick="pr('stk','${j.id}')">1. ສະຕິກເກີ (30x40)</button><button class="btn g" onclick="pr('rec','${j.id}')">2. ໃບຮັບເຄື່ອງ</button><button class="btn g" onclick="pr('acc','${j.id}')">3. ຂໍ້ມູນລູກຄ້າ / ລະຫັດອີເມວ</button></div></div>
 <div class="card"><b>ຂໍ້ມູນລູກຄ້າ / ລະຫັດອີເມວ (ສຳລັບໃບທີ 3)</b><label>ອີເມວ</label><div class="inl"><input id="a_u" value="${esc(un)}" placeholder="ຊື່ອີເມວ"><select id="a_d">${DOM.map(d=>`<option ${d===dsel?"selected":""}>${d}</option>`).join("")}<option value="" ${dsel===""?"selected":""}>(ພິມເອງທັງໝົດ)</option></select></div>
 <label>ລະຫັດຜ່ານ (ບໍ່ບັນທຶກລົງລະບົບ ໃຊ້ສຳລັບພິມເທົ່ານັ້ນ)</label><input id="a_p" autocomplete="off">
 <div class="row" style="margin-top:8px"><button class="btn g" onclick="saveAcct('${j.id}')">ບັນທຶກອີເມວ</button><button class="btn" onclick="pr('acc','${j.id}')">ພິມໃບຂໍ້ມູນ</button></div></div>`;P[2]={p:[],g:[]};P[3]={p:[],g:[]};showPics(j.id);
 }
 const em=()=>{const u=$("#a_u").value.trim(),d=$("#a_d").value;return!u?"":u.includes("@")?u:u+d};
+const ppGet=k=>{try{return JSON.parse(lsGet("pp-"+k))||{}}catch(e){return{}}};
+let pvx=null;
+const PV={stk:[30,40,30,40,3],rec:[110,70,210,297,.85],acc:[210,297,210,297,.45]};
 async function pr(k,id){const j=jobs.find(x=>x.id===id),x={done:doneDate(j)};
-  if(isIOS){x.win=window.open("","_blank");if(x.win)x.win.document.write("<p style='font:16px sans-serif;padding:20px'>ກຳລັງກຽມເອກະສານ…</p>")}
   if(k==="acc"){x.pw=$("#a_p")?.value||"";x.email=em()}else{const t=await syncQ(j);if(t)x.url=new URL("status.html?t="+t,location.href).href}
-  printDoc(k,j,S,toast,x)}
+  x.opt=ppGet(k);x.preview=pv=>showPv(pv);pvx={k,j,x};printDoc(k,j,S,toast,x)}
+function showPv(pv){
+  pvx.html=pv.html;pvx.htmlBar=pv.htmlBar;const k=pvx.k,[vw,vh,pw,ph,z]=PV[k],o=pvx.x.opt,px=n=>Math.round(n*3.7795*z);
+  let m=$("#pv");
+  if(m&&m.dataset.k===k){$("#pvi").srcdoc=pv.html;return}
+  closePv();m=document.createElement("div");m.id="pv";m.dataset.k=k;m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:25;display:flex;align-items:center;justify-content:center;padding:10px";
+  m.innerHTML=`<div class="card" style="width:min(580px,100%);max-height:96vh;overflow:auto;margin:0"><b>ຕົວຢ່າງກ່ອນພິມ</b> <small style="color:var(--mu)">ຂະໜາດກະດາດ ${esc(pv.page)}</small>
+<div style="margin:8px 0;background:#e9edf3;border-radius:8px;overflow:auto;padding:8px"><div style="width:${px(vw)}px;height:${px(vh)}px;overflow:hidden;background:#fff;box-shadow:0 0 0 1px #c9d3e6"><iframe id="pvi" style="border:0;width:${pw}mm;height:${ph}mm;transform:scale(${z});transform-origin:0 0;background:#fff"></iframe></div></div>
+<div class="row"><div><label>ຂະໜາດ %</label><input type="number" id="pp_s" value="${o.s||100}" step="5" min="50" max="150" onchange="ppSet()"></div><div><label>ຍ້າຍຂວາ (mm)</label><input type="number" id="pp_x" value="${o.dx||0}" step="1" min="-30" max="30" onchange="ppSet()"></div><div><label>ຍ້າຍລົງ (mm)</label><input type="number" id="pp_y" value="${o.dy||0}" step="1" min="-30" max="30" onchange="ppSet()"></div></div>
+<p style="color:var(--mu);font-size:12px;margin:8px 0">ກົດ 🖨 ພິມ → ເລືອກເຄື່ອງພິມ ແລະ ຂະໜາດກະດາດໃນໜ້າຕ່າງພິມ (ຕັ້ງຂະໜາດເລີ່ມຕົ້ນໃຫ້ແລ້ວ). ຖ້າພິມເລື່ອນ ໃຫ້ປັບ ຂະໜາດ / ຍ້າຍ ແລ້ວພິມໃໝ່. ຄ່າທີ່ປັບຈະຖືກຈື່ໄວ້</p>
+${k==="stk"?`<div style="margin:6px 0;padding:10px;border:1px solid var(--bd);border-radius:10px"><b>ເຄື່ອງພິມ Bluetooth?</b><div style="color:var(--mu);font-size:12px">ເຄື່ອງພິມ Bluetooth ຈະບໍ່ປາກົດໃນໜ້າຕ່າງພິມຂອງ iPhone. ກົດປຸ່ມລຸ່ມນີ້ ແລ້ວເລືອກແອັບຂອງເຄື່ອງພິມ (ຂະໜາດ 30×40 mm)</div><div class="row" style="margin-top:6px;align-items:center"><img id="stkimg" style="width:90px;flex:none;min-width:0;border:1px solid var(--bd)"><button class="btn" onclick="stkShare()">📤 ສົ່ງໄປແອັບເຄື່ອງພິມ / ບັນທຶກຮູບ</button></div></div>`:""}<div class="row"><button class="btn" style="padding:13px;font-size:16px" onclick="pvPrint()">🖨 ພິມ</button><button class="btn g" onclick="ppReset()">ຣີເຊັດ</button><button class="btn g" onclick="closePv()">ປິດ</button></div></div>`;
+  document.body.appendChild(m);$("#pvi").srcdoc=pv.html;
+  if(k==="stk"){const j=pvx.j;stkCanvas(j).toBlob(b=>{pvx.blob=b;const im=$("#stkimg");if(im&&b)im.src=URL.createObjectURL(b)},"image/png")}}
+// สติกเกอร์เป็นรูป PNG สำหรับเครื่องพิมพ์บลูทูธ (ส่งเข้าแอปของเครื่องพิมพ์)
+function stkCanvas(j){
+  const W=480,H=640,c=document.createElement("canvas");c.width=W;c.height=H;const g=c.getContext("2d"),pad=18,w=W-2*pad;
+  const F=(px,b)=>`${b?"700 ":""}${px}px 'Phetsarath OT','Noto Sans Lao','Lao Sangam MN',sans-serif`;
+  const ch=t=>window.Intl&&Intl.Segmenter?[...new Intl.Segmenter(undefined,{granularity:"grapheme"}).segment(t)].map(x=>x.segment):[...t];
+  const ell=(t,mw)=>{t=String(t||"");if(g.measureText(t).width<=mw)return t;let a=ch(t);while(a.length&&g.measureText(a.join("")+"…").width>mw)a.pop();return a.join("")+"…"};
+  g.fillStyle="#fff";g.fillRect(0,0,W,H);g.fillStyle="#000";g.textBaseline="top";
+  g.font=F(44,1);g.textAlign="right";g.fillText(j.code||"",W-pad,12);const cw=g.measureText(j.code||"").width;
+  g.textAlign="left";g.font=F(46,1);g.fillText(ell(j.cname,w-cw-14),pad,12);
+  const line=(a,b,y)=>{g.font=F(30,0);g.fillText(a,pad,y);const lw=g.measureText(a+" ").width;g.font=F(32,1);g.fillText(ell(b,w-lw),pad+lw,y)};
+  line("ເບີ:",j.phone,76);line("ລຸ້ນ / ສີ:",[j.brand,j.model,j.color].filter(Boolean).join(" "),116);
+  const hasP=j.pattern&&j.pattern.length>0;line("ລະຫັດ:",j.lock||"",156);
+  let yh=204;
+  if(hasP){const bx=W-pad-104,by=150,k=104/100,pt=i=>[bx+[17,50,83][(i-1)%3]*k,by+[17,50,83][Math.floor((i-1)/3)]*k];
+    g.strokeStyle="#000";g.lineWidth=5;g.lineJoin="round";g.lineCap="round";if(j.pattern.length>1){g.beginPath();j.pattern.forEach((i,n)=>{const[x,y]=pt(i);n?g.lineTo(x,y):g.moveTo(x,y)});g.stroke()}
+    for(let i=1;i<=9;i++){const[x,y]=pt(i),n=j.pattern.indexOf(i);g.beginPath();g.arc(x,y,n===0?11:n>0?7:5,0,7);g.fillStyle=n>=0?"#000":"#888";g.fill()}
+    g.fillStyle="#000";yh=262}
+  g.fillRect(pad,yh,w,3);g.textAlign="center";g.font=F(28,0);g.fillText("ອາການ",W/2,yh+8);g.textAlign="left";
+  const sv=((j.issues&&j.issues.length?j.issues:[j.issue]).filter(Boolean)).join(", ");g.font=F(38,1);
+  let y=yh+50,line2="";const lines=[];for(const x of ch(sv)){if(g.measureText(line2+x).width>w){lines.push(line2);line2=x}else line2+=x}if(line2)lines.push(line2);
+  for(const l of lines){if(y>H-140){break}g.fillText(l,pad,y);y+=48}
+  g.textAlign="center";g.font=F(40,1);g.fillText("ເບີຮ້ານ "+S.phone,W/2,H-108);g.font=F(28,0);g.fillText(fd(j.date)+" "+ft(j.date),W/2,H-52);
+  return c}
+async function stkShare(){if(!pvx||!pvx.blob){toast("ກຳລັງກຽມຮູບ… ລອງໃໝ່");return}
+  const f=new File([pvx.blob],"sticker-"+pvx.j.code+".png",{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:pvx.j.code});return}catch(e){if(e&&e.name==="AbortError")return}}
+  const a=document.createElement("a");a.href=URL.createObjectURL(pvx.blob);a.download=f.name;a.click();toast("ບັນທຶກຮູບແລ້ວ ເປີດໃນແອັບເຄື່ອງພິມ")}
+function ppSet(){if(!pvx)return;const o={s:+$("#pp_s").value||100,dx:+$("#pp_x").value||0,dy:+$("#pp_y").value||0};lsSet("pp-"+pvx.k,JSON.stringify(o));pvx.x.opt=o;printDoc(pvx.k,pvx.j,S,toast,pvx.x)}
+function ppReset(){if(!pvx)return;lsSet("pp-"+pvx.k,"{}");pvx.x.opt={};["pp_s","pp_x","pp_y"].forEach((i,n)=>$("#"+i).value=n?0:100);printDoc(pvx.k,pvx.j,S,toast,pvx.x)}
+function closePv(){const m=$("#pv");if(m)m.remove()}
+function pvPrint(){if(!pvx)return;
+  if(isIOS){const w=window.open("","_blank");if(w){w.document.open();w.document.write(pvx.htmlBar);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch(e){}},900)}else toast("ເປີດແທັບໃໝ່ບໍ່ໄດ້ — ອະນຸຍາດ pop-up")}
+  else{const f=$("#pvi").contentWindow;f.focus();f.print()}}
+async function showQr(id){const j=jobs.find(x=>x.id===id),t=await syncQ(j);if(!t)return;const url=new URL("status.html?t="+t,location.href).href;let svg="";
+  try{const q=qrcode(0,"M");q.addData(url);q.make();svg=q.createSvgTag({cellSize:6,margin:2,scalable:true}).replace("<svg ",'<svg style="width:100%;height:100%" ')}catch(e){}
+  const m=document.createElement("div");m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:25;display:flex;align-items:center;justify-content:center;padding:14px";m.onclick=e=>{if(e.target===m)m.remove()};
+  m.innerHTML=`<div class="card" style="width:min(340px,100%);text-align:center;margin:0"><b>QR ຕິດຕາມເຄື່ອງຂອງທ່ານ</b><div style="width:250px;height:250px;margin:10px auto;background:#fff">${svg}</div><div style="font-size:11px;word-break:break-all;color:var(--mu)">${esc(url)}</div><div class="row" style="margin-top:10px"><button class="btn g" onclick="navigator.clipboard&&navigator.clipboard.writeText('${url}').then(()=>toast('ສຳເນົາລິ້ງແລ້ວ'))">ສຳເນົາລິ້ງ</button><button class="btn" onclick="this.closest('.card').parentElement.remove()">ປິດ</button></div></div>`;document.body.appendChild(m)}
+async function saveSvc(id){const j=jobs.find(x=>x.id===id);if(!j)return;const items=getSel("g_issues");if(!items.length){toast("ເລືອກຢ່າງໜ້ອຍ 1 ບໍລິການ");return}
+  const t=new Date().toISOString();
+  if(await save(()=>updateDoc(J(id),{issues:items,issue:items.join(", "),log:[...(j.log||[]),{t,f:["ບໍລິການ: "+items.join(", ")]}]}))){await syncQ({...j,issues:items,issue:items.join(", ")});dirty=false;toast("ບັນທຶກບໍລິການແລ້ວ");if(view==="det"&&cur===id)draw()}}
 async function sendLink(id,mode){
   const j=jobs.find(x=>x.id===id),t=await syncQ(j);if(!t)return;
   const url=new URL("status.html?t="+t,location.href).href,msg=`ສະບາຍດີ ${j.cname}\nກວດສະຖານະເຄື່ອງຂອງທ່ານ (${j.code}) ໄດ້ທີ່ນີ້:\n${url}\n— ${S.name}`;
@@ -324,4 +379,4 @@ async function chPw(){const n=$("#c_np").value;if(n.length<6){toast("ລະຫ�
 async function chEm(){const n=$("#c_ne").value.trim();if(!n){toast("ໃສ່ອີເມວໃໝ່");return}const u=await reauth();if(u&&await save(()=>verifyBeforeUpdateEmail(u,n)))toast("ສົ່ງລິ້ງຢືນຢັນໄປອີເມວໃໝ່ແລ້ວ")}
 function backup(){const b=new Blob([JSON.stringify({settings:S,jobs},null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="sl-mobile-backup-"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
 async function restore(f){if(!f||!confirm("ການກູ້ຄືນຈະຂຽນທັບງານທີ່ມີລະຫັດດຽວກັນ ດຳເນີນການຕໍ່?"))return;try{const d=JSON.parse(await f.text());for(const j of d.jobs||[]){const{id,...r}=j;await setDoc(J(id),r)}if(d.settings)await setDoc(SH,d.settings);toast("ກູ້ຄືນແລ້ວ "+(d.jobs||[]).length+" ງານ")}catch(e){toast("ກູ້ຄືນບໍ່ສຳເລັດ: "+(e.code||e.message))}}
-Object.assign(window,{dz,saveStep,setso,dtg,dall,xCnt,xDl,qt,qa,qac,addPics,rmPic,viewPic,padClear,askTech,setTech,mtAdd,chTech,closeMd,topL,sendLink,go,logout,stat,setq,setfs,fill,tg,saveJob,pr,chSt,saveAcct,delJob,addL,delL,saveShop,saveSt,addSt,delSt,mvSt,chPw,chEm,backup,restore});
+Object.assign(window,{stkShare,showQr,saveSvc,ppSet,ppReset,closePv,pvPrint,dz,saveStep,setso,dtg,dall,xCnt,xDl,qt,qa,qac,addPics,rmPic,viewPic,padClear,askTech,setTech,mtAdd,chTech,closeMd,topL,sendLink,go,logout,stat,setq,setfs,fill,tg,saveJob,pr,chSt,saveAcct,delJob,addL,delL,saveShop,saveSt,addSt,delSt,mvSt,chPw,chEm,backup,restore});
