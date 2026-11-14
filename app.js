@@ -1,8 +1,8 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut,updatePassword,reauthenticateWithCredential,EmailAuthProvider,verifyBeforeUpdateEmail} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,updateDoc,deleteDoc,runTransaction,getDocs} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {firebaseConfig} from "./firebase-config.js?v=20261106e";
-import {printDoc,patInner,patSvg,isIOS} from "./print.js?v=20261106e";
+import {firebaseConfig} from "./firebase-config.js?v=20261106f";
+import {printDoc,patInner,patSvg,isIOS} from "./print.js?v=20261106f";
 
 const fapp=initializeApp(firebaseConfig),auth=getAuth(fapp),fdb=(()=>{try{return initializeFirestore(fapp,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){return getFirestore(fapp)}})();
 const SH=doc(fdb,"settings","shop"),J=id=>doc(fdb,"jobs",id);
@@ -264,7 +264,7 @@ function showPv(pv){
 <div style="margin:8px 0;background:#e9edf3;border-radius:8px;overflow:auto;padding:8px"><div style="width:${px(vw)}px;height:${px(vh)}px;overflow:hidden;background:#fff;box-shadow:0 0 0 1px #c9d3e6"><iframe id="pvi" style="border:0;width:${pw}mm;height:${ph}mm;transform:scale(${z});transform-origin:0 0;background:#fff"></iframe></div></div>
 <div class="row"><div><label>ຂະໜາດ %</label><input type="number" id="pp_s" value="${o.s||100}" step="5" min="50" max="150" onchange="ppSet()"></div><div><label>ຍ້າຍຂວາ (mm)</label><input type="number" id="pp_x" value="${o.dx||0}" step="1" min="-30" max="30" onchange="ppSet()"></div><div><label>ຍ້າຍລົງ (mm)</label><input type="number" id="pp_y" value="${o.dy||0}" step="1" min="-30" max="30" onchange="ppSet()"></div></div>
 <p style="color:var(--mu);font-size:12px;margin:8px 0">ກົດ 🖨 ພິມ → ເລືອກເຄື່ອງພິມ ແລະ ຂະໜາດກະດາດໃນໜ້າຕ່າງພິມ (ຕັ້ງຂະໜາດເລີ່ມຕົ້ນໃຫ້ແລ້ວ). ຖ້າພິມເລື່ອນ ໃຫ້ປັບ ຂະໜາດ / ຍ້າຍ ແລ້ວພິມໃໝ່. ຄ່າທີ່ປັບຈະຖືກຈື່ໄວ້</p>
-${k==="stk"?`<div style="margin:6px 0;padding:10px;border:1px solid var(--bd);border-radius:10px"><b>ເຄື່ອງພິມ Bluetooth?</b><div style="color:var(--mu);font-size:12px">ເຄື່ອງພິມ Bluetooth ຈະບໍ່ປາກົດໃນໜ້າຕ່າງພິມຂອງ iPhone. ກົດປຸ່ມລຸ່ມນີ້ ແລ້ວເລືອກແອັບຂອງເຄື່ອງພິມ (ຂະໜາດ 30×40 mm)</div><div class="row" style="margin-top:6px;align-items:center"><img id="stkimg" style="width:90px;flex:none;min-width:0;border:1px solid var(--bd)"><button class="btn" onclick="stkShare()">📤 ສົ່ງໄປແອັບເຄື່ອງພິມ / ບັນທຶກຮູບ</button></div></div>`:""}<div class="row"><button class="btn" style="padding:13px;font-size:16px" onclick="pvPrint()">🖨 ພິມ</button><button class="btn g" onclick="ppReset()">ຣີເຊັດ</button><button class="btn g" onclick="closePv()">ປິດ</button></div></div>`;
+${k==="stk"?`<div style="margin:6px 0;padding:10px;border:1px solid var(--bd);border-radius:10px"><b>ເຄື່ອງພິມ Bluetooth?</b><div style="color:var(--mu);font-size:12px">ເຄື່ອງພິມ Bluetooth ຈະບໍ່ປາກົດໃນໜ້າຕ່າງພິມຂອງ iPhone. ໃຊ້ຮູບນີ້ (ຈັດວາງສວຍຄືເກົ່າ) ເຂົ້າແອັບເຄື່ອງພິມ: ກົດ "ສຳເນົາຮູບ" ແລ້ວໄປວາງໃນແອັບ, ຫຼື "ແບ່ງປັນ" → Save Image ແລ້ວເລືອກຮູບຈາກອັລບັ້ມ. ຕັ້ງຂະໜາດຟລາກ 30×40 mm</div><div class="row" style="margin-top:6px;align-items:center"><img id="stkimg" style="width:90px;flex:none;min-width:0;border:1px solid var(--bd)"><div style="flex:1;display:flex;flex-direction:column;gap:6px;min-width:170px"><button class="btn" onclick="stkShare()">📤 ແບ່ງປັນ (ເລືອກ Save Image / ແອັບ)</button><button class="btn g" onclick="stkCopy()">📋 ສຳເນົາຮູບ</button><button class="btn g" onclick="stkSave()">💾 ບັນທຶກເປັນໄຟລ໌</button></div></div></div>`:""}<div class="row"><button class="btn" style="padding:13px;font-size:16px" onclick="pvPrint()">🖨 ພິມ</button><button class="btn g" onclick="ppReset()">ຣີເຊັດ</button><button class="btn g" onclick="closePv()">ປິດ</button></div></div>`;
   document.body.appendChild(m);$("#pvi").srcdoc=pv.html;
   if(k==="stk"){const j=pvx.j;stkCanvas(j).toBlob(b=>{pvx.blob=b;const im=$("#stkimg");if(im&&b)im.src=URL.createObjectURL(b)},"image/png")}}
 // สติกเกอร์เป็นรูป PNG สำหรับเครื่องพิมพ์บลูทูธ (ส่งเข้าแอปของเครื่องพิมพ์)
@@ -294,6 +294,9 @@ async function stkShare(){if(!pvx||!pvx.blob){toast("ກຳລັງກຽມຮ
   const f=new File([pvx.blob],"sticker-"+pvx.j.code+".png",{type:"image/png"});
   if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:pvx.j.code});return}catch(e){if(e&&e.name==="AbortError")return}}
   const a=document.createElement("a");a.href=URL.createObjectURL(pvx.blob);a.download=f.name;a.click();toast("ບັນທຶກຮູບແລ້ວ ເປີດໃນແອັບເຄື່ອງພິມ")}
+async function stkCopy(){if(!pvx||!pvx.blob){toast("ກຳລັງກຽມຮູບ… ລອງໃໝ່");return}
+  try{await navigator.clipboard.write([new ClipboardItem({"image/png":pvx.blob})]);toast("ສຳເນົາຮູບແລ້ວ — ໄປວາງໃນແອັບເຄື່ອງພິມ")}catch(e){toast("ສຳເນົາບໍ່ໄດ້ — ໃຊ້ແບ່ງປັນ ຫຼື ບັນທຶກແທນ")}}
+function stkSave(){if(!pvx||!pvx.blob){toast("ກຳລັງກຽມຮູບ… ລອງໃໝ່");return}const a=document.createElement("a");a.href=URL.createObjectURL(pvx.blob);a.download="sticker-"+pvx.j.code+".png";document.body.appendChild(a);a.click();a.remove();toast("ບັນທຶກໄຟລ໌ແລ້ວ (ໃນແອັບ Files)")}
 function ppSet(){if(!pvx)return;const o={s:+$("#pp_s").value||100,dx:+$("#pp_x").value||0,dy:+$("#pp_y").value||0};lsSet("pp-"+pvx.k,JSON.stringify(o));pvx.x.opt=o;printDoc(pvx.k,pvx.j,S,toast,pvx.x)}
 function ppReset(){if(!pvx)return;lsSet("pp-"+pvx.k,"{}");pvx.x.opt={};["pp_s","pp_x","pp_y"].forEach((i,n)=>$("#"+i).value=n?0:100);printDoc(pvx.k,pvx.j,S,toast,pvx.x)}
 function closePv(){const m=$("#pv");if(m)m.remove()}
@@ -397,4 +400,4 @@ async function saveQuick(id){const j=jobs.find(x=>x.id===id);if(!j)return;
   if(!ch.length){closeMd();return}
   if(await save(()=>updateDoc(J(id),{...o,log:[...(j.log||[]),{t:new Date().toISOString(),f:ch}]}))){closeMd();await syncQ({...j,...o});toast("ບັນທຶກແລ້ວ")}}
 function savePrefix(){const v=$("#s_prefix").value.trim().toUpperCase();if(!/^[A-Z]{1,6}$/.test(v)){toast("ໃຊ້ຕົວອັກສອນ A-Z 1-6 ຕົວ");return}if(v===S.prefix)return;if(confirm("ປ່ຽນຄຳນຳໜ້າເປັນ "+v+"-xxxxx ? ງານເກົ່າທັງໝົດຈະປ່ຽນຕາມ ເລກລຳດັບຄືເກົ່າ"))pushS({prefix:v})}
-Object.assign(window,{qEdit,saveQuick,savePrefix,stkShare,showQr,saveSvc,ppSet,ppReset,closePv,pvPrint,dz,saveStep,setso,dtg,dall,xCnt,xDl,qt,qa,qac,addPics,rmPic,viewPic,padClear,askTech,setTech,mtAdd,chTech,closeMd,topL,sendLink,go,logout,stat,setq,setfs,fill,tg,saveJob,pr,chSt,saveAcct,delJob,addL,delL,saveShop,saveSt,addSt,delSt,mvSt,chPw,chEm,backup,restore});
+Object.assign(window,{stkCopy,stkSave,qEdit,saveQuick,savePrefix,stkShare,showQr,saveSvc,ppSet,ppReset,closePv,pvPrint,dz,saveStep,setso,dtg,dall,xCnt,xDl,qt,qa,qac,addPics,rmPic,viewPic,padClear,askTech,setTech,mtAdd,chTech,closeMd,topL,sendLink,go,logout,stat,setq,setfs,fill,tg,saveJob,pr,chSt,saveAcct,delJob,addL,delL,saveShop,saveSt,addSt,delSt,mvSt,chPw,chEm,backup,restore});
